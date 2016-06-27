@@ -1,0 +1,173 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/juicy-ace-editor/juicy-ace-editor.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+
+<dom-module id="file-editor">
+  <style>
+
+  :host {
+    display: block;
+    padding: 10px;
+  }
+  .card {
+    box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    margin: 12px;
+    border-radius: 5px;
+    background-color: #fff;
+    color: #757575;
+    position:absolute;
+    bottom: 0px;
+    top: 60px;
+    right: 0px;
+    left: 0px;
+  }
+
+  juicy-ace-editor {
+    position:absolute;
+    bottom: 10px;
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    display: none;
+  }
+  </style>
+
+  <template>
+    <iron-ajax id="ajax" url="/file/{{path}}" handle-as="text" on-response="handleResponse"></iron-ajax>
+    <iron-ajax id="ajaxPut" url="/file/{{path}}" handle-as="text" method="PUT"></iron-ajax>
+    <div class="card">
+        <juicy-ace-editor id="editor" mode$="{{mode}}" softtabs="true" tabsize="2" on-change="textChange">
+        </juicy-ace-editor>
+    </div>
+  </template>
+
+  <script>
+  Polymer({
+    is: 'file-editor',
+    mode: "",
+    properties: {
+      'path': {
+        type: String,
+        observer: "pathChanged"
+      },
+      'mime': {
+        type: String,
+        observer: "mimeChanged"
+      }
+    },
+    pathChanged: function(){
+      this.unlisten(this.$.editor, 'change', 'textChange');
+      this.$.editor.onChange=function(e){};
+      this.$.editor.value="";
+      if (this.path){
+        this.$.ajax.generateRequest();
+        this.$.editor.style.display='block';
+      } else {
+        this.$.editor.style.display='none';
+      }
+
+    },
+    mimeChanged: function(){
+      this.mode="ace/mode/text";
+      var mode=this.mime;
+      if (mode.indexOf("haskell")>-1){
+        mode="ace/mode/haskell";
+      } else if (mode.indexOf("cabal")>-1){
+        mode="ace/mode/haskell_cabal";
+      } else if (mode.indexOf("yaml")>-1){
+        mode="ace/mode/yaml";
+      } else if (mode.indexOf("json")>-1){
+        mode="ace/mode/json";
+      } else if (this.path && this.path.endsWith(".md")>-1){
+        mode="ace/mode/markdown";
+      }
+      this.mode=mode;
+    },
+    statusChanged: function(e){
+      this.status=e.detail;
+      this.updateStatus();
+    },
+    handleResponse: function(e){
+      var ed=this.$.editor;
+      ed.value=e.detail.response;
+      ed.editor.clearSelection( );
+      ed.editor.moveCursorTo(0,0);
+      ed.editor.focus();
+      this.setDetails();
+      this.listen(this.$.editor, 'change', 'textChange');
+      this.updateStatus();
+    },
+    textChange: function(e){
+      console.log(e.detail);
+      var ed=this.$.editor;
+      this.$.ajaxPut.body=ed.value;
+      this.$.ajaxPut.generateRequest();
+    },
+    fileOpened: function(e){
+      if (e && e.detail){
+        this.details=e.detail.details;
+        if (e.detail.path==this.path){
+          this.setDetails();
+        }
+        this.path=e.detail.path;
+        this.mime=e.detail.mime;
+
+      } else {
+        this.details=null;
+        this.path=null;
+        this.mime="text/plain";
+      }
+
+    },
+    setDetails(){
+      if (this.details){
+        if (this.details.line){
+          var ed=this.$.editor;
+          ed.editor.clearSelection( );
+          ed.editor.scrollToLine(this.details.line-1,true,true);
+          ed.editor.moveCursorTo(this.details.line-1,this.details.column-1);
+        }
+      }
+    },
+    ready: function(){
+      this.status={};
+    //  this.markers=[];
+    },
+    updateStatus: function(){
+      var st=this.status[this.path];
+      var ed=this.$.editor;
+      /*for (var i=0;i<this.markers.length;i++){
+        ed.editor.getSession().removeMarker(this.markers[i]);
+      }
+      this.markers=[];
+      if (st){
+        for (var i=0;i<st.messages.length;i++){
+          var msg=st.messages[i];
+          var type=msg.severity.toLowerCase();
+          var Range = ace.require('ace/range').Range;
+          var rg=new Range(msg.line,msg.column,msg.line,msg.column);
+          var mk=ed.editor.getSession().addMarker(rg,type,type,true);
+          this.markers.push(mk);
+        }
+      }*/
+      ed.editor.getSession().clearAnnotations();
+      if (st){
+        var anns=[];
+        for (var i=0;i<st.messages.length;i++){
+          var msg=st.messages[i];
+          var type=msg.severity.toLowerCase();
+          anns.push({
+            row: msg.line-1,
+            column: msg.column-1,
+            text: msg.message.join("\n").trim(),
+            type: type
+          });
+        }
+        ed.editor.getSession().setAnnotations(anns);
+      }
+    }
+  });
+  </script>
+</dom-module>

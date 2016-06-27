@@ -1,0 +1,188 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="my-icons.html">
+<link rel="import" href="file-browser.html">
+<link rel="import" href="file-actions.html">
+<link rel="import" href="file-editor.html">
+<link rel="import" href="build-status.html">
+
+<dom-module id="my-app">
+
+  <template>
+
+    <style>
+
+      :host {
+        display: block;
+        --app-primary-color: #453a62;
+        --app-secondary-color: black;
+      }
+      app-header {
+        background-color: var(--app-primary-color);
+        color: #fff;
+      }
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+    </style>
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+
+    <app-drawer-layout fullbleed>
+
+      <!-- Drawer content -->
+      <app-drawer>
+        <!-- https://github.com/PolymerElements/app-layout/tree/master/app-drawer -->
+        <div style="height:100%;overflow:auto;">
+          <file-actions id="fileActions" on-file-system-changed="fileSystemChanged"></file-actions>
+          <file-browser id="fileBrowser" class="drawer-list" parent="/" on-path-selected="pathSelected" on-file-selected="fileOpened">
+          </file-browser>
+        </div>
+      </app-drawer>
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header condenses reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+            <paper-menu-button>
+              <paper-icon-button icon="expand-more" class="dropdown-trigger"></paper-icon-button>
+              <paper-menu id="openedList" class="dropdown-content" on-iron-select="openedItemSelected">
+                <template is="dom-repeat" items="[[openedItems]]">
+                  <paper-item path="[[item.path]]" type="[[item.type]]" mime="[[item.mime]]"><img border="0" src="[[showIcon(item)]]" alt="[[item.mime]]" on-error="iconError"></img><span>[[item.path]]</span></paper-item>
+                </template>
+              </paper-menu>
+            </paper-menu-button>
+            <div title id="title">[[appTitle]]</div>
+            <build-status on-file-selected="fileOpened" on-status-changed="statusChanged"></build-status>
+            <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
+              <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
+              <paper-menu class="dropdown-content">
+                <paper-icon-item on-tap="closeCurrent"><iron-icon icon="close" alt="Close" item-icon></iron-icon>Close</paper-icon-item>
+                <paper-icon-item on-tap="closeAll"><iron-icon icon="close" alt="Close All" item-icon></iron-icon>Close All</paper-icon-item>
+              </paper-menu>
+            </paper-menu-button>
+          </app-toolbar>
+        </app-header>
+
+        <file-editor id="editor"></file-editor>
+
+      </app-header-layout>
+
+    </app-drawer-layout>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'my-app',
+
+      properties: {
+
+      },
+
+      pathSelected : function (e){
+        this.$.fileActions.pathSelected(e);
+      },
+      fileSystemChanged: function (e){
+        this.$.fileBrowser.fileSystemChanged(e);
+      },
+      fileOpened: function(e){
+          this.$.editor.fileOpened(e);
+          var item=e.detail;
+          Polymer.dom(this.$.title).innerHTML=item.path;
+          if (!this.openedPaths[item.path]){
+            this.openedPaths[item.path]=this.openedItems.length+1;
+            this.push('openedItems',item);
+          }
+          this.currentPath=item.path;
+          this.$.openedFileActions.disabled=false;
+      },
+      openedItemSelected: function(){
+        var item=this.$.openedList.selectedItem;
+        this.$.editor.fileOpened({detail:item});
+        Polymer.dom(this.$.title).innerHTML=item.path;
+        this.currentPath=item.path;
+      },
+      ready: function() {
+          this.openedItems = [];
+          this.openedPaths = {};
+          this.currentPath = null;
+          this.appTitle='Reload Haskell IDE';
+      },
+      showIcon: function(item){
+        if (item.mime){
+            return "/images/"+item.mime+".png";
+        }
+        return "/images/text/plain.png";
+      },
+      iconError:function(e){
+        e.target.src="/images/text/plain.png";
+      },
+      closeCurrent:function(e){
+        if (this.currentPath){
+          var idx=this.openedPaths[this.currentPath]-1
+          delete this.openedPaths[this.currentPath];
+          this.splice('openedItems',idx,1);
+          if (this.openedItems.length>0){
+            var item=this.openedItems[0];
+            this.currentPath=item.path;
+            this.$.editor.fileOpened({detail:item});
+            Polymer.dom(this.$.title).innerHTML=item.path;
+          } else {
+            this.currentPath=null;
+            this.$.editor.fileOpened(null);
+            Polymer.dom(this.$.title).innerHTML=this.appTitle;
+            this.$.openedFileActions.disabled=true;
+          }
+        }
+      },
+      closeAll: function(e){
+        this.openedPaths={};
+        this.currentPath=null;
+        this.splice('openedItems',0,this.openedItems.length);
+        this.$.editor.fileOpened(null);
+        Polymer.dom(this.$.title).innerHTML=this.appTitle;
+        this.$.openedFileActions.disabled=true;
+      },
+      statusChanged: function(e){
+        this.$.editor.statusChanged(e);
+      }
+    });
+
+  </script>
+
+</dom-module>

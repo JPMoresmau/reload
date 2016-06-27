@@ -1,0 +1,157 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/x-websocket/x-websocket.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-badge/paper-badge.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+
+<dom-module id="build-status">
+
+  <style>
+
+  .warning {
+    --paper-badge-background: yellow;
+    --paper-badge-text-color: var(--app-primary-color);
+  }
+
+
+  </style>
+
+  <template>
+    <x-websocket id="xws" url="ws://localhost:8081/" on-message="messageReceived" json="true"></x-websocket>
+    <div>
+      <paper-menu-button horizontal-align="right">
+        <paper-icon-button id="error" icon="error" alt="Errors" class="dropdown-trigger">
+        </paper-icon-button>
+        <paper-menu id="errorMenu" class="dropdown-content" on-iron-select="jumpToError">
+          <template is="dom-repeat" items="[[errors]]">
+            <paper-item><span>[[formatMessage(item)]]</span></paper-item>
+          </template>
+        </paper-menu>
+      </paper-menu-button>
+      <paper-badge id="errorBadge" for="error" label="[[errorCount]]">
+      </paper-badge>
+      <paper-menu-button horizontal-align="right" on-iron-select="jumpToWarning">
+        <paper-icon-button id="warning" icon="warning" alt="Warnings" class="dropdown-trigger">
+        </paper-icon-button>
+         <paper-menu id="warningMenu" class="dropdown-content">
+            <template is="dom-repeat" items="[[warnings]]">
+              <paper-item><span>[[formatMessage(item)]]</span></paper-item>
+            </template>
+          </paper-menu>
+        </paper-menu-button>
+      <paper-badge id="warningBadge" for="warning" label="[[warningCount]]" class="warning nocount">
+      </paper-badge>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'build-status',
+      properties: {
+      },
+      messageReceived: function(e){
+        var loads=e.detail.data;
+        this.$.xws.send("OK");
+        console.log(e.detail.data);
+        if (loads){
+          var thisLoad={};
+          for (var a=0;a<loads.length;a++){
+            var load=loads[a];
+            var path=load.file;
+            if (path){
+              if (!thisLoad[path]){
+                thisLoad[path]=true;
+                var st=this.status[path];
+                if (st){
+                  st.message=[];
+                }
+              }
+              if (load.severity){
+                var st=this.status[path];
+                if (!st){
+                  st={"mime":load.mime,"messages":[]};
+                  this.status[path]=st;
+                }
+
+                if (load.message.length>1){
+                  if (load.message[0].indexOf(path)>-1){
+                    load.message.splice(0,1);
+                  }
+                }
+                st.messages.push({"severity":load.severity,"line":load.line,"column":load.column,"message":load.message});
+              } else {
+                this.status[path]={"module":load.module,"mime":load.mime,"messages":[]};
+              }
+            }
+          }
+          this.fire("status-changed",this.status);
+          var errs=[];
+          var warns=[];
+          for (var p in this.status){
+            var st=this.status[p];
+            var msgs=st.messages;
+            for (var a=0;a<msgs.length;a++){
+              var m=msgs[a];
+              if (m.severity==="Error"){
+                errs.push({"path":p,"mime":st.mime,"details":m});
+              } else if (m.severity==="Warning"){
+                warns.push({"path":p,"mime":st.mime,"details":m});
+              }
+            }
+          }
+          this.errorCount=errs.length;
+          this.warningCount=warns.length;
+          this.errors=errs;
+          this.warnings=warns;
+          this.$.errorBadge.style.visibility=this.errorCount>0?"visible":"hidden";
+          this.$.warningBadge.style.visibility=this.warningCount>0?"visible":"hidden";
+        }
+      },
+      ready: function(){
+        this.status={};
+        this.errorCount=0;
+        this.warningCount=0;
+        this.errors=[];
+        this.warnings=[];
+        this.$.errorBadge.style.visibility="hidden";
+        this.$.warningBadge.style.visibility="hidden";
+        var xws = this.$.xws;
+        xws.open();
+      },
+      formatMessage(item){
+        var p=item.path;
+        var msgs=item.details.message;
+        var l=item.details.line;
+        var c=item.details.column;
+
+        var s=p;
+        if (l){
+          s+=":"+l;
+        }
+        if (c){
+          s+=":"+c;
+        }
+        if (msgs.length>0){
+          s+=msgs.join(" ").trim();
+        }
+        return s;
+      },
+      jumpToError:function(e){
+        var item=this.errors[this.$.errorMenu.selected];
+        this.fire("file-selected",item);
+        this.$.errorMenu.select(null);
+      },
+      jumpToWarning:function(e){
+        var item=this.warnings[this.$.warningMenu.selected];
+        this.fire("file-selected",item);
+        this.$.warningMenu.select(null);
+      }
+    });
+
+  </script>
+
+</dom-module>

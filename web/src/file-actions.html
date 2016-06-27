@@ -1,0 +1,173 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+
+
+<dom-module id="file-actions">
+  <style>
+  app-toolbar {
+    color: var(--app-primary-color);
+  }
+
+    paper-dialog {
+      width: 200%;
+      overflow: auto;
+    }
+
+
+  </style>
+
+  <template>
+    <iron-ajax id="creationAjax" handle-as="json" on-response="handleCreation" method="PUT"></iron-ajax>
+    <iron-ajax id="deletionAjax" handle-as="json" on-response="handleDeletion" method="DELETE"></iron-ajax>
+    <app-toolbar>
+      <paper-menu-button>
+        <paper-icon-button id="new_obj" icon="create" alt="New..." class="dropdown-trigger"></paper-icon-button>
+        <paper-menu class="dropdown-content">
+          <paper-icon-item on-tap="newFolder"><iron-icon src="/images/folder_new.png" alt="New Folder..." item-icon></iron-icon>New Folder...</paper-icon-item>
+          <paper-icon-item on-tap="newFile"><iron-icon src="/images/file_new.png" alt="New File..." item-icon></iron-icon>New File...</paper-icon-item>
+        </paper-menu>
+      </paper-menu-button>
+      <paper-tooltip for="new_obj" offset="0">New...</paper-tooltip>
+      <paper-icon-button id="delete" icon="delete" alt="Delete" on-tap="deletePath" disabled></paper-icon-button>
+      <paper-tooltip for="delete" offset="0">Delete...</paper-tooltip>
+    </app-toolbar>
+
+    <paper-dialog id="new_folder_dialog" on-iron-overlay-closed="folderClosed">
+      <h2><iron-icon src="/images/folder_new.png" alt="New Folder..."></iron-icon>New Folder</h2>
+      <paper-input id="new_folder_dialog_path" label="Path"></paper-input>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm>Accept</paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-dialog id="new_file_dialog" on-iron-overlay-closed="fileClosed">
+      <h2><iron-icon src="/images/file_new.png" alt="New File..." class="file-button"></iron-icon>New File</h2>
+      <paper-input id="new_file_dialog_path" label="Path"></paper-input>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm>Accept</paper-button>
+      </div>
+    </paper-dialog>
+
+    <paper-dialog id="delete_dialog" on-iron-overlay-closed="deleteClosed">
+      <h2>Delete</h2>
+      <paper-dialog-scrollable id="delete_text">
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm>Accept</paper-button>
+      </div>
+    </paper-dialog>
+
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'file-actions',
+      listeners: {
+        'path-selected': 'pathSelected',
+      },
+      selectedPath: null,
+      lastCreated: null,
+      lastDeleted: null,
+      pathSelected: function(e){
+        var tgt=e.detail;
+        if (this.selectedPath){
+          Polymer.dom(this.selectedPath).classList.remove("dir-selected");
+        }
+        this.selectedPath=tgt;
+        Polymer.dom(tgt).classList.add("dir-selected");
+        this.$.delete.disabled=this.selectedPath==null;
+      },
+      selectedPathName : function(add){
+        if (!this.selectedPath){
+          return "";
+        } else {
+          var path=this.selectedPath.parentNode.path;
+          if (add){
+            if (this.selectedPath.parentNode.type==="file"){
+              var ix=path.lastIndexOf("/");
+              if (ix>-1){
+                path=path.substring(0,ix);
+              } else {
+                path="";
+              }
+            }
+            return path+"/";
+          }
+          return path;
+        }
+      },
+      newFile: function(){
+        this.$.new_file_dialog_path.value=this.selectedPathName(true);
+        this.$.new_file_dialog.open();
+      },
+      newFolder: function(){
+        this.$.new_folder_dialog_path.value=this.selectedPathName(true);
+        this.$.new_folder_dialog.open();
+      },
+      deletePath: function(){
+        Polymer.dom(this.$.delete_text).innerHTML="Are you sure you want to delete <b>"+this.selectedPathName(false)+"</b>?";
+        this.$.delete_dialog.open();
+      },
+      fileClosed: function(e){
+        if (e.detail.confirmed){
+          var p=this.$.new_file_dialog_path.value;
+          var aj=this.$.creationAjax;
+          aj.url="/file/"+p;
+          aj.body="";
+          aj.generateRequest();
+          this.lastCreated=p;
+        }
+      },
+      folderClosed: function(e){
+        if (e.detail.confirmed){
+          var p=this.$.new_folder_dialog_path.value;
+          var aj=this.$.creationAjax;
+          aj.url="/files/"+p;
+          aj.generateRequest();
+          this.lastCreated=p;
+        }
+      },
+      deleteClosed: function(e){
+        if (e.detail.confirmed){
+          var aj=this.$.deletionAjax;
+          var p=this.selectedPathName(false);
+          if (this.selectedPath.parentNode.type==="file"){
+            aj.url="/file/"+p;
+          } else {
+            aj.url="/files/"+p;
+          }
+
+          aj.generateRequest();
+          this.lastDeleted=p;
+        }
+      },
+      handleCreation: function(e){
+        if (e.detail.status==201){
+          this.fire("file-system-changed",{"created":this.lastCreated});
+        }
+      },
+      handleDeletion: function(e){
+        if (e.detail.status==200){
+          this.fire("file-system-changed",{"delete":this.lastDeleted});
+        }
+      }
+    });
+  </script>
+
+</dom-module>

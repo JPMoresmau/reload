@@ -1,0 +1,112 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
+
+<dom-module id="file-browser">
+<style>
+  .drawer-list {
+    margin: 0 0px;
+  }
+  .drawer-list div {
+    padding: 0 10px;
+    display: block;
+    text-decoration: none;
+    color: var(--app-primary-color);
+    cursor: pointer;
+    font-size: small;
+  }
+  .nav {
+    @apply(--layout-vertical);
+  }
+  .dir-selected{
+    font-weight: bold;
+  }
+
+</style>
+
+  <template>
+
+  <div class="nav">
+    <iron-ajax id="ajax" auto url="/files{{parent}}" handle-as="json"
+      on-response="handleResponse"></iron-ajax>
+
+    <div class="drawer-list" role="listbox">
+      <template is="dom-repeat" items="{{items}}">
+        <div path="{{item.path}}" type="{{item.type}}" mime="{{item.mime}}" expanded="false">
+            <span on-tap="pathSelected" style="white-space: nowrap;"><img border="0" src="{{showIcon(item)}}" on-error="iconError"></img>{{showPath(item.path)}}</span>
+        </div>
+      </template>
+    </iron-list>
+  </div>
+  </template>
+
+  <script>
+
+    Polymer({
+
+      is: 'file-browser',
+      items: [],
+      properties: {
+        parent : {
+          type:String
+        }
+      },
+      handleResponse : function (e) {
+        this.items=e.detail.response;
+      },
+      pathSelected: function(e){
+        var tgt=e.target;
+        if (tgt.localName === "iron-icon" || tgt.tagName === "IMG"){
+          tgt=tgt.parentNode;
+        }
+        var a=tgt.parentNode;
+        this.fire("path-selected",tgt);
+        if (a.type==="dir"){
+
+          var d=Polymer.dom(a);
+          if (!a.expanded){
+            var subF = document.createElement("file-browser");
+            subF.parent = "/"+a.path;
+            d.appendChild(subF);
+            a.expanded=true;
+            d.querySelector("img").src=this.showIcon(a);
+          } else {
+            a.expanded=false;
+            d.removeChild(d.childNodes[d.childNodes.length-1]);
+            d.querySelector("img").src=this.showIcon(a);
+          }
+        } else if (a.type==="file"){
+          this.fire("file-selected",{"path":a.path, "mime": a.mime, "type": a.type});
+        }
+
+      },
+      showIcon: function(item){
+        if (item.type==="dir"){
+          if (!item.expanded){
+            return "/images/folder_closed.png";
+          } else {
+            return "/images/folder.png";
+          }
+        } else if (item.type==="file"){
+          if (item.mime){
+            return "/images/"+item.mime+".png";
+          }
+          return "/images/text/plain.png";
+        }
+        return "";
+      },
+      showPath: function(path){
+        return path.split("/").pop();
+      },
+      fileSystemChanged: function(e){
+        this.items=[];
+        this.$.ajax.generateRequest();
+      },
+      iconError:function(e){
+        e.target.src="/images/text/plain.png";
+      }
+    });
+
+  </script>
+</dom-module>
