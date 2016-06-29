@@ -20,7 +20,7 @@
   </style>
 
   <template>
-    <x-websocket id="xws" url="ws://localhost:8081/" on-message="messageReceived" json="true"></x-websocket>
+    <x-websocket id="xws" on-message="messageReceived" json="true"></x-websocket>
     <div>
       <paper-menu-button horizontal-align="right">
         <paper-icon-button id="error" icon="error" alt="Errors" class="dropdown-trigger">
@@ -120,6 +120,7 @@
         this.$.errorBadge.style.visibility="hidden";
         this.$.warningBadge.style.visibility="hidden";
         var xws = this.$.xws;
+        xws.url='ws://'+location.hostname+(location.port ? ':'+location.port: '');
         xws.open();
       },
       formatMessage(item){
