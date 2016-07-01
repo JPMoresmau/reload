@@ -164,7 +164,7 @@
       },
       handleDeletion: function(e){
         if (e.detail.status==200){
-          this.fire("file-system-changed",{"delete":this.lastDeleted});
+          this.fire("file-system-changed",{"deleted":this.lastDeleted});
         }
       }
     });

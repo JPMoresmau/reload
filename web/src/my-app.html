@@ -119,6 +119,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       fileSystemChanged: function (e){
         this.$.fileBrowser.fileSystemChanged(e);
+        var deletedPath=e.detail.deleted;
+        if (deletedPath!==undefined){
+          var idx=this.openedPaths[deletedPath];
+          if (idx!==undefined){
+            delete this.openedPaths[deletedPath];
+            this.splice('openedItems',idx-1,1);
+            this.onClose();
+          }
+        }
+
       },
       fileOpened: function(e){
           var item=e.detail;
@@ -174,17 +184,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var idx=this.openedPaths[this.currentPath]-1
           delete this.openedPaths[this.currentPath];
           this.splice('openedItems',idx,1);
-          if (this.openedItems.length>0){
-            var item=this.openedItems[0];
-            this.currentPath=item.path;
-            this.$.editor.fileOpened({detail:item});
-            Polymer.dom(this.$.title).innerHTML=item.path;
-          } else {
-            this.currentPath=null;
-            this.$.editor.fileOpened(null);
-            Polymer.dom(this.$.title).innerHTML=this.appTitle;
-            this.$.openedFileActions.disabled=true;
-          }
+          this.onClose();
+        }
+      },
+      onClose: function(){
+        if (this.openedItems.length>0){
+          var item=this.openedItems[0];
+          this.currentPath=item.path;
+          this.$.editor.fileOpened({detail:item});
+          Polymer.dom(this.$.title).innerHTML=item.path;
+        } else {
+          this.currentPath=null;
+          this.$.editor.fileOpened(null);
+          Polymer.dom(this.$.title).innerHTML=this.appTitle;
+          this.$.openedFileActions.disabled=true;
         }
       },
       closeAll: function(e){
