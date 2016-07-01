@@ -121,14 +121,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.fileBrowser.fileSystemChanged(e);
       },
       fileOpened: function(e){
-          this.$.editor.fileOpened(e);
           var item=e.detail;
-          Polymer.dom(this.$.title).innerHTML=item.path;
           if (!this.openedPaths[item.path]){
             this.openedPaths[item.path]=this.openedItems.length+1;
             this.push('openedItems',item);
           }
-          this.currentPath=item.path;
+          this.$.openedList.selected=this.openedPaths[item.path]-1;
           this.$.openedFileActions.disabled=false;
       },
       openedItemSelected: function(){

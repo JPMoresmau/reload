@@ -16,6 +16,15 @@
     --paper-badge-text-color: var(--app-primary-color);
   }
 
+  paper-menu{
+    width:800px;
+  }
+  
+
+  .message-list{
+    font-size:0.6em;
+    margin:0;
+ }
 
   </style>
 
@@ -27,7 +36,7 @@
         </paper-icon-button>
         <paper-menu id="errorMenu" class="dropdown-content" on-iron-select="jumpToError">
           <template is="dom-repeat" items="[[errors]]">
-            <paper-item><span>[[formatMessage(item)]]</span></paper-item>
+            <paper-item class="message-list" role="menuitem">[[formatMessage(item)]]</paper-item>
           </template>
         </paper-menu>
       </paper-menu-button>
@@ -36,9 +45,9 @@
       <paper-menu-button horizontal-align="right" on-iron-select="jumpToWarning">
         <paper-icon-button id="warning" icon="warning" alt="Warnings" class="dropdown-trigger">
         </paper-icon-button>
-         <paper-menu id="warningMenu" class="dropdown-content">
+         <paper-menu id="warningMenu" class="dropdown-content" on-iron-select="jumpToWarning">
             <template is="dom-repeat" items="[[warnings]]">
-              <paper-item><span>[[formatMessage(item)]]</span></paper-item>
+              <paper-item class="message-list" role="menuitem">[[formatMessage(item)]]</paper-item>
             </template>
           </paper-menu>
         </paper-menu-button>
@@ -137,7 +146,7 @@
           s+=":"+c;
         }
         if (msgs.length>0){
-          s+=msgs.join(" ").trim();
+          s+=": "+msgs.join(" ").trim();
         }
         return s;
       },

@@ -133,6 +133,8 @@
     },
     ready: function(){
       this.status={};
+      var ed=this.$.editor;
+      ed.editor.setHighlightSelectedWord(true);
     //  this.markers=[];
     },
     updateStatus: function(){
