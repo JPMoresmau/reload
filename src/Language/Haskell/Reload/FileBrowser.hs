@@ -7,7 +7,7 @@ module Language.Haskell.Reload.FileBrowser
 
 import Data.Typeable (Typeable)
 import Data.Char (toLower)
-import Data.List (sort,isPrefixOf) 
+import Data.List (sort,isPrefixOf)
 import System.Directory
 import System.FilePath
 import qualified Data.Text as T

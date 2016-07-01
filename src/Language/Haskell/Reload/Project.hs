@@ -25,7 +25,6 @@ readTargets :: FilePath -> IO [Target]
 readTargets cabalFile = do
   gpd <- readPackageDescription silent cabalFile
   let pd = flattenPackageDescription gpd
-
   let ltgts= map (Target Library "" . hsSourceDirs . libBuildInfo) $ maybeToList $ library pd
   let etgts= map (\e->Target Executable (exeName e)  (hsSourceDirs $ buildInfo e)) $ executables pd
   let ttgts= map (\t->Target TestSuite (testName t) (hsSourceDirs $ testBuildInfo t)) $ testSuites pd

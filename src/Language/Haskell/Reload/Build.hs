@@ -70,9 +70,7 @@ rebuild bs@(BuildState root buildResult mghci) path = void $ forkIO $ do
     then
       restartBuild bs
     else do
-      print $ "path:"++path
       let sess=filter (matchGroup path . rtGroup) ghci
-      print $ length sess
       _ <- mapM (interrupt . rtGhci) sess
       loads <- mapM (reload . rtGhci) sess
       ok1 <- tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)

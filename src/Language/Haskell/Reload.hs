@@ -119,6 +119,7 @@ app withRepl = do
   root <- getCurrentDirectory
   buildResult <- newEmptyMVar
   buildState<- startBuild root buildResult withRepl
+  putStrLn $ "Ready!"
   sco <- scottyApp $ app' buildState
   return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
 
@@ -142,5 +143,5 @@ wsApp buildResult pending_conn = do
 runApp :: Int -> IO ()
 runApp port = do --scotty port app
     let setts = setPort port defaultSettings
-    putStrLn $ "Serving on http://localhost:" ++(show port)
+    putStrLn $ "Serving on http://localhost:" ++(show port)++"..."
     runSettings setts =<< app True
