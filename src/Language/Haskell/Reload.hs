@@ -143,5 +143,5 @@ wsApp buildResult pending_conn = do
 runApp :: Int -> IO ()
 runApp port = do --scotty port app
     let setts = setPort port defaultSettings
-    putStrLn $ "Serving on http://localhost:" ++(show port)++"..."
+    putStrLn $ "Preparing to serve on http://localhost:" ++(show port)++"..."
     runSettings setts =<< app True

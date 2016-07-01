@@ -20,9 +20,9 @@ data BuildState = BuildState
   }
 
 data ReplTarget = ReplTarget
- { rtGroup :: ReplTargetGroup
- , rtGhci :: Ghci
- }
+  { rtGroup :: ReplTargetGroup
+  , rtGhci :: Ghci
+  }
 
 stackFile :: FilePath
 stackFile = "stack.yaml"

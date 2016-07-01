@@ -135,25 +135,10 @@
       this.status={};
       var ed=this.$.editor;
       ed.editor.setHighlightSelectedWord(true);
-    //  this.markers=[];
     },
     updateStatus: function(){
       var st=this.status[this.path];
       var ed=this.$.editor;
-      /*for (var i=0;i<this.markers.length;i++){
-        ed.editor.getSession().removeMarker(this.markers[i]);
-      }
-      this.markers=[];
-      if (st){
-        for (var i=0;i<st.messages.length;i++){
-          var msg=st.messages[i];
-          var type=msg.severity.toLowerCase();
-          var Range = ace.require('ace/range').Range;
-          var rg=new Range(msg.line,msg.column,msg.line,msg.column);
-          var mk=ed.editor.getSession().addMarker(rg,type,type,true);
-          this.markers.push(mk);
-        }
-      }*/
       ed.editor.getSession().clearAnnotations();
       if (st){
         var anns=[];
