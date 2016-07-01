@@ -19,7 +19,7 @@
   paper-menu{
     width:800px;
   }
-  
+
 
   .message-list{
     font-size:0.6em;
@@ -42,7 +42,7 @@
       </paper-menu-button>
       <paper-badge id="errorBadge" for="error" label="[[errorCount]]">
       </paper-badge>
-      <paper-menu-button horizontal-align="right" on-iron-select="jumpToWarning">
+      <paper-menu-button horizontal-align="right">
         <paper-icon-button id="warning" icon="warning" alt="Warnings" class="dropdown-trigger">
         </paper-icon-button>
          <paper-menu id="warningMenu" class="dropdown-content" on-iron-select="jumpToWarning">
@@ -105,10 +105,11 @@
             var msgs=st.messages;
             for (var a=0;a<msgs.length;a++){
               var m=msgs[a];
+              var it={"path":p,"type":"file","mime":st.mime,"details":m};
               if (m.severity==="Error"){
-                errs.push({"path":p,"mime":st.mime,"details":m});
+                errs.push(it);
               } else if (m.severity==="Warning"){
-                warns.push({"path":p,"mime":st.mime,"details":m});
+                warns.push(it);
               }
             }
           }
@@ -152,13 +153,17 @@
       },
       jumpToError:function(e){
         var item=this.errors[this.$.errorMenu.selected];
-        this.fire("file-selected",item);
-        this.$.errorMenu.select(null);
+        if (item !==undefined){
+          this.fire("file-selected",item);
+          this.$.errorMenu.select(null);
+        }
       },
       jumpToWarning:function(e){
         var item=this.warnings[this.$.warningMenu.selected];
-        this.fire("file-selected",item);
-        this.$.warningMenu.select(null);
+        if (item!==undefined){
+          this.fire("file-selected",item);
+          this.$.warningMenu.select(null);
+        }
       }
     });
 

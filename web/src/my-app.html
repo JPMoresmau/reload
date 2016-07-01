@@ -80,7 +80,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <paper-icon-button icon="expand-more" class="dropdown-trigger"></paper-icon-button>
               <paper-menu id="openedList" class="dropdown-content" on-iron-select="openedItemSelected">
                 <template is="dom-repeat" items="[[openedItems]]">
-                  <paper-item path="[[item.path]]" type="[[item.type]]" mime="[[item.mime]]"><img border="0" src="[[showIcon(item)]]" alt="[[item.mime]]" on-error="iconError"></img><span>[[item.path]]</span></paper-item>
+                  <paper-item><img border="0" src="[[showIcon(item)]]" alt="[[item.mime]]" on-error="iconError"></img><span>[[item.path]]</span></paper-item>
                 </template>
               </paper-menu>
             </paper-menu-button>
@@ -122,24 +122,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       fileOpened: function(e){
           var item=e.detail;
+          var empty=this.openedItems.length==0;
           if (!this.openedPaths[item.path]){
             this.openedPaths[item.path]=this.openedItems.length+1;
-            this.push('openedItems',item);
+            // clone without details
+            this.push('openedItems',{'path':item.path,'mime':item.mime});
           }
-          this.$.openedList.selected=this.openedPaths[item.path]-1;
+          var idx=this.openedPaths[item.path]-1;
+          if (empty || this.$.openedList.selected!=idx){
+            this.notifyEditor=false;
+            this.$.openedList.selected=idx;
+          }
+
+          // with details if any
+          this.$.editor.fileOpened({detail:item});
+
           this.$.openedFileActions.disabled=false;
       },
       openedItemSelected: function(){
-        var item=this.$.openedList.selectedItem;
-        this.$.editor.fileOpened({detail:item});
-        Polymer.dom(this.$.title).innerHTML=item.path;
-        this.currentPath=item.path;
+        var sel=this.$.openedList.selected;
+        if (sel>-1){
+          var item=this.openedItems[sel];
+          if (item !== undefined){
+            if (this.notifyEditor){
+              this.$.editor.fileOpened({detail:item});
+            }
+            this.notifyEditor=true;
+            Polymer.dom(this.$.title).innerHTML=item.path;
+            this.currentPath=item.path;
+          }
+        }
       },
       ready: function() {
           this.openedItems = [];
           this.openedPaths = {};
           this.currentPath = null;
           this.appTitle='Reload Haskell IDE';
+          this.notifyEditor = true;
       },
       showIcon: function(item){
         if (item.mime){
