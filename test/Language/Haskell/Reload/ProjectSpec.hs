@@ -3,6 +3,8 @@ module Language.Haskell.Reload.ProjectSpec where
 import Language.Haskell.Reload.Project
 
 import           Test.Hspec
+import System.Directory
+import System.FilePath
 
 spec :: Spec
 spec = do
@@ -30,3 +32,24 @@ spec = do
     it "resolve prefixes properly" $ do
       let tg1=ReplTargetGroup "" [Target Library "" ["src"],Target Executable "exec" ["exe"]]
       matchGroup "src2/Reload.hs" tg1 `shouldBe` False
+  describe "find cabal file" $ do
+    it "find our own file" $ do
+      dir <- getCurrentDirectory
+      cf <- cabalFileInFolder dir
+      cf `shouldBe` Just (dir </> "reload.cabal")
+    it "find our own file with trailing slash" $ do
+        dir <- getCurrentDirectory
+        cf <- cabalFileInFolder $ dir ++ "/"
+        cf `shouldBe` Just (dir </> "reload.cabal")
+    it "doesn't find a non existing file" $ do
+      dir <- getCurrentDirectory
+      cf <- cabalFileInFolder $ dir </> "src"
+      cf `shouldBe` Nothing
+  describe "load targets and groups" $ do
+    it "load our own file" $ do
+      dir <- getCurrentDirectory
+      Just cf <- cabalFileInFolder dir
+      tgts <- readTargets cf
+      tgts `shouldBe` [Target Library "" ["src"],Target Executable "reload-exe" ["app"],Target TestSuite "reload-test" ["src","test"]]
+      let grps = targetGroups tgts
+      grps `shouldBe` [ReplTargetGroup "" [Target Library "" ["src"],Target Executable "reload-exe" ["app"]],ReplTargetGroup "reload-test" [Target TestSuite "reload-test" ["src","test"]]]

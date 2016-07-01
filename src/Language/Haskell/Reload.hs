@@ -114,11 +114,11 @@ checkPath path f = do
       json Null
     else f
 
-app :: IO Application
-app = do
+app :: Bool -> IO Application
+app withRepl = do
   root <- getCurrentDirectory
   buildResult <- newEmptyMVar
-  buildState<- startBuild root buildResult
+  buildState<- startBuild root buildResult withRepl
   sco <- scottyApp $ app' buildState
   return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
 
@@ -143,4 +143,4 @@ runApp :: Int -> IO ()
 runApp port = do --scotty port app
     let setts = setPort port defaultSettings
     putStrLn $ "Serving on http://localhost:" ++(show port)
-    runSettings setts =<< app
+    runSettings setts =<< app True

@@ -9,7 +9,7 @@ import           Data.Aeson (Value(..), object, (.=))
 import           Language.Haskell.Reload (app)
 
 spec :: Spec
-spec = with app $ do
+spec = with (app False) $ do
   describe "GET /" $ do
     it "responds with 200 /" $ do
       get "/" `shouldRespondWith` 200

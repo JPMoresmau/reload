@@ -21,7 +21,7 @@ import           Data.Monoid
 import           Control.Monad
 
 spec :: Spec
-spec = after cleanUp $ with app $ do
+spec = after cleanUp $ with (app False)$ do
   describe "GET /files" $ do
     it "responds with files and folders at root" $ do
       js <- liftIO $ do
