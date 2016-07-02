@@ -12,7 +12,7 @@ import System.Directory
 import System.FilePath
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import qualified Data.ByteString as B
+-- import qualified Data.ByteString as B
 import qualified Data.Map as DM
 import Network.Mime
 import Data.Aeson
@@ -91,14 +91,13 @@ getMIME = mimeByExt extendedMimeMap "text/plain" . T.pack
 getMIMEText :: FilePath -> T.Text
 getMIMEText = T.decodeUtf8 . getMIME
 
--- | Get the file contents as a Text. Assumes UTF-8 encoding
-getFileContents :: FilePath -> IO T.Text
-getFileContents fp = do
-  bs <- B.readFile fp
-  return $ T.decodeUtf8 bs
+-- -- | Get the file contents as a Text. Assumes UTF-8 encoding
+-- getFileContents :: FilePath -> IO T.Text
+-- getFileContents fp = do
+--   bs <- B.readFile fp
+--   return $ T.decodeUtf8 bs
 
-
--- | Set the file contents as a Text. Assumes UTF-8 encoding
-setFileContents :: FilePath -> T.Text -> IO ()
-setFileContents fp cnts =
-  B.writeFile fp $ T.encodeUtf8 cnts
+-- -- -- | Set the file contents as a Text. Assumes UTF-8 encoding
+-- -- setFileContents :: FilePath -> T.Text -> IO ()
+-- setFileContents fp cnts =
+--   B.writeFile fp $ T.encodeUtf8 cnts

@@ -4,6 +4,7 @@ module Language.Haskell.Reload.Build where
 import Language.Haskell.Reload.FileBrowser
 import Language.Haskell.Reload.Project
 
+import Control.Concurrent.MVar
 import Data.Aeson
 import Language.Haskell.Ghcid
 import Control.Monad
@@ -17,6 +18,8 @@ data BuildState = BuildState
   { bsRoot :: FilePath
   , bsBuildResult :: MVar Value
   , bsGhci :: IORef [ReplTarget]
+  , bsInterrupt :: MVar ()
+  , bsAction :: MVar ()
   }
 
 data ReplTarget = ReplTarget
@@ -36,21 +39,24 @@ replCommand :: FilePath -> String -> String -> IO String
 replCommand root project component = do
   isStack <- hasStack root
   return $ if isStack
-              then "stack repl " ++ project ++ (if null component then "" else ":" ++ component)
+              then "stack repl " ++ (if null component then "" else project ++ ":" ++ component)
               else "cabal repl" ++ (if null component then "" else " " ++ component)
 
 replTarget :: FilePath -> ReplTargetGroup -> IO (ReplTarget,[Load])
 replTarget root grp = do
   let nm=rtgName grp
   cmd <- replCommand root (projectName root) nm
-  (ghci,load) <- startGhci cmd (Just root) (\_ _ -> return ())
+  putStrLn cmd
+  (ghci,load) <- startGhci cmd (Just root) (\_ l -> putStrLn l)
   return (ReplTarget grp ghci,load)
 
 startBuild :: FilePath -> MVar Value -> Bool -> IO BuildState
 startBuild root buildResult withRepl= do
   tgts <- if withRepl then startSessions root buildResult else return []
   mghci <- newIORef tgts
-  return $ BuildState root buildResult mghci
+  int <- newMVar ()
+  act <- newMVar ()
+  return $ BuildState root buildResult mghci int act
 
 startSessions :: FilePath -> MVar Value -> IO [ReplTarget]
 startSessions root buildResult = do
@@ -64,22 +70,29 @@ startSessions root buildResult = do
   return tgts
 
 rebuild :: BuildState -> FilePath -> IO ()
-rebuild bs@(BuildState root buildResult mghci) path = void $ forkIO $ do
+rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
   ghci <- readIORef mghci
   if shouldRestart path
     then
       restartBuild bs
     else do
       let sess=filter (matchGroup path . rtGroup) ghci
-      _ <- mapM (interrupt . rtGhci) sess
-      loads <- mapM (reload . rtGhci) sess
-      ok1 <- tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
-      when (not ok1) $ do
-        _ <- tryTakeMVar buildResult
-        void $ tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
+      --putStrLn $ "sess:" ++ (show $ length sess)
+      loads <- withMVar int $ \_-> do
+        --putStrLn "got int"
+        mapM_ (interrupt . rtGhci) sess
+        loads <- mapM (reload . rtGhci) sess
+        --putStrLn $ "put int:" ++ (show loads)
+        return loads
+      when (not $ null loads) $ do
+        let cloads = ordNub $ concat loads
+        ok1 <- tryPutMVar buildResult $ loadsToValue root cloads
+        when (not ok1) $ do
+          _ <- tryTakeMVar buildResult
+          void $ tryPutMVar buildResult $ loadsToValue root cloads
 
 restartBuild :: BuildState -> IO ()
-restartBuild (BuildState root buildResult mghci) = do
+restartBuild (BuildState root buildResult mghci _ _) = do
   ghci <- readIORef mghci
   _ <- mapM (quit . rtGhci) ghci
   tgts <- startSessions root buildResult

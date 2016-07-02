@@ -1,6 +1,5 @@
 module Language.Haskell.Reload.Project where
 
-import Data.IORef
 import Data.List (isPrefixOf)
 import Data.Maybe
 
