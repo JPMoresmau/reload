@@ -6,7 +6,7 @@ import Language.Haskell.Reload.FileBrowser
 
 import           Data.Aeson (Value(..),encode)
 import           Network.Wai
-import           Network.Wai.Handler.Warp
+import           Network.Wai.Handler.Launch
 import Network.Wai.Middleware.Static
 import Network.HTTP.Types.Status
 import Web.Scotty
@@ -142,6 +142,6 @@ wsApp buildResult pending_conn = do
 
 runApp :: Int -> IO ()
 runApp port = do --scotty port app
-    let setts = setPort port defaultSettings
+    --let setts = setPort port defaultSettings
     putStrLn $ "Preparing to serve on http://localhost:" ++(show port)++"..."
-    runSettings setts =<< app True
+    runUrlPort port "" =<< app True

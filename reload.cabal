@@ -36,6 +36,7 @@ library
                      , warp
                      , ghcid
                      , Cabal
+                     , wai-handler-launch
   default-language:    Haskell2010
   other-modules:       Language.Haskell.Reload.FileBrowser
                        Language.Haskell.Reload.Build
@@ -77,6 +78,7 @@ test-suite reload-test
                      , warp
                      , ghcid
                      , Cabal
+                     , wai-handler-launch
                      , unordered-containers
   ghc-options:         -threaded -O2 -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
