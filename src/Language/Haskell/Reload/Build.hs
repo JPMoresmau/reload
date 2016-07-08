@@ -13,6 +13,12 @@ import System.FilePath
 import System.Directory
 import Data.IORef
 import qualified Data.Set as Set
+import qualified Data.Text as T
+import Data.List (isPrefixOf)
+
+import System.Process
+import GHC.IO.Handle
+import System.IO.Error
 
 data BuildState = BuildState
   { bsRoot :: FilePath
@@ -40,7 +46,7 @@ replCommand root project component = do
   isStack <- hasStack root
   return $ if isStack
               then "stack repl " ++ (if null component then "" else project ++ ":" ++ component)
-              else "cabal repl" ++ (if null component then "" else " " ++ component)
+              else "cabal repl " ++ (if null component then "" else " " ++ component)
 
 replTarget :: FilePath -> ReplTargetGroup -> IO (ReplTarget,[Load])
 replTarget root grp = do
@@ -88,7 +94,7 @@ rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
         let cloads = ordNub $ concat loads
         ok1 <- tryPutMVar buildResult $ loadsToValue root cloads
         when (not ok1) $ do
-          _ <- tryTakeMVar buildResult
+          void $ tryTakeMVar buildResult
           void $ tryPutMVar buildResult $ loadsToValue root cloads
 
 restartBuild :: BuildState -> IO ()
@@ -104,7 +110,7 @@ shouldRestart fp = let
   in (f == stackFile || takeExtension f == ".cabal")
 
 loadsToValue :: FilePath -> [Load] -> Value
-loadsToValue root = toJSON . map (loadToValue root)
+loadsToValue root loads = object ["loads" .= map (loadToValue root) loads]
 
 loadToValue :: FilePath -> Load -> Value
 loadToValue root (Loading modu file)=object ["module".=modu,"file".=(relative root file),"mime".=getMIMEText file]
@@ -123,3 +129,28 @@ ordNub l = go Set.empty l
     go _ [] = []
     go s (x:xs) = if x `Set.member` s then go s xs
                                       else x : go (Set.insert x s) xs
+
+launch :: T.Text -> String -> BuildState -> IO ()
+launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
+  void $ tryPutMVar buildResult (object ["process" .= name])
+  resolvedCommand <- if ("<tool>" `isPrefixOf` command)
+    then do
+      hs <- hasStack root
+      let tc = if hs then "stack" else "cabal"
+      return $ tc ++ drop 6 command
+    else return command
+  putStrLn resolvedCommand
+  let cp = (shell resolvedCommand) {cwd = Just root, std_out = CreatePipe, std_err = CreatePipe}
+  (_,Just out,Just err,_) <- createProcess cp
+  processHandle out "out"
+  processHandle err "err"
+  where
+    processHandle :: Handle -> String -> IO ()
+    processHandle h str = void $ forkIO $  do
+      hSetBuffering h LineBuffering
+      hSetBinaryMode h False
+      void $ tryIOError $ forever $ do
+        line <- hGetLine h
+        putMVar buildResult (object ["process" .= name, "line" .= line, "stream" .= str])
+      when ("out" == str) $ putMVar buildResult (object ["process" .= name, "line" .= ("<end>"::T.Text), "stream" .= str])
+      

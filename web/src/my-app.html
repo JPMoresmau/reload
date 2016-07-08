@@ -32,8 +32,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="my-app">
 
-  <template>
-
     <style>
 
       :host {
@@ -51,6 +49,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     </style>
 
+  <template>
+
+
+  <iron-ajax id="ajax" auto url="/file/reload.json" handle-as="json"
+      on-response="handleConfigResponse"></iron-ajax>
+  <iron-ajax id="ajaxProjectAction" url="/launch" handle-as="json" method="POST"
+      ></iron-ajax>
+
+
     <app-location route="{{route}}"></app-location>
     <app-route
         route="{{route}}"
@@ -64,7 +71,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <app-drawer>
         <!-- https://github.com/PolymerElements/app-layout/tree/master/app-drawer -->
         <div style="height:100%;overflow:auto;">
-          <file-actions id="fileActions" on-file-system-changed="fileSystemChanged"></file-actions>
+          <file-actions id="fileActions" on-file-system-changed="fileSystemChanged" on-project-action="projectAction"></file-actions>
           <file-browser id="fileBrowser" class="drawer-list" parent="/" on-path-selected="pathSelected" on-file-selected="fileOpened">
           </file-browser>
         </div>
@@ -85,7 +92,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </paper-menu>
             </paper-menu-button>
             <div title id="title">[[appTitle]]</div>
-            <build-status on-file-selected="fileOpened" on-status-changed="statusChanged"></build-status>
+            <build-status on-file-selected="fileOpened" on-status-changed="statusChanged" on-process-stream="processStream"></build-status>
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">
@@ -96,7 +103,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </app-toolbar>
         </app-header>
 
-        <file-editor id="editor"></file-editor>
+        <file-editor id="editor" on-config-changed="configChanged"></file-editor>
 
       </app-header-layout>
 
@@ -136,7 +143,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (!this.openedPaths[item.path]){
             this.openedPaths[item.path]=this.openedItems.length+1;
             // clone without details
-            this.push('openedItems',{'path':item.path,'mime':item.mime});
+            this.push('openedItems',{'path':item.path,'mime':item.mime,'type':item.type});
           }
           var idx=this.openedPaths[item.path]-1;
           if (empty || this.$.openedList.selected!=idx){
@@ -160,6 +167,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.notifyEditor=true;
             Polymer.dom(this.$.title).innerHTML=item.path;
             this.currentPath=item.path;
+            if (item.type==="process"){
+              var cnt=this.processes[item.path];
+              if (cnt){
+                this.$.editor.setValue(cnt);
+              }
+            }
           }
         }
       },
@@ -169,6 +182,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.currentPath = null;
           this.appTitle='Reload Haskell IDE';
           this.notifyEditor = true;
+          this.config= {};
+          this.processes={};
       },
       showIcon: function(item){
         if (item.mime){
@@ -210,9 +225,61 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       statusChanged: function(e){
         this.$.editor.statusChanged(e);
+      },
+      handleConfigResponse : function(e){
+        this.config=e.detail.response;
+      },
+      configChanged : function (e){
+        this.config=e.detail;
+      },
+      projectAction: function(e){
+        var act=e.detail.action;
+        this.processes[act]="";
+        var cmd="<tool> "+act;
+        if (this.config["actions"] && this.config["actions"][act]){
+          cmd=this.config["actions"][act];
+        }
+        var aj=this.$.ajaxProjectAction;
+        aj.url="launch/"+act;
+        aj.body=cmd;
+        aj.generateRequest();
+      },
+      processStream: function(e){
+        var p=e.detail;
+        var cnt = this.processes[p.process];
+        if (!cnt){
+          cnt=""
+          this.processes[p.process]=cnt;
+        }
+        var current=false;
+        var sel=this.$.openedList.selected;
+        if (sel>-1){
+          var item=this.openedItems[sel];
+          if ("process"==item.type && item.path==p.process){
+            current=true;
+          }
+        }
+          
+        if (p.stream){
+          if (cnt.length>0){
+            cnt+="\n";
+          }
+          cnt+=p.line;
+          this.processes[p.process]=cnt;
+          if (current){
+            this.$.editor.addLine(p.line);
+          }
+        } else {
+          this.processes[p.process]="";
+          this.fileOpened({detail:{path:p.process,type:'process',mime:'text/plain'}});
+          if (current){
+            this.$.editor.setValue("");
+          }
+        } 
       }
     });
 
   </script>
 
 </dom-module>
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>

@@ -16,7 +16,8 @@ import Control.Monad
 import Control.Monad.IO.Class
 import System.FilePath
 import qualified Data.ByteString.Lazy as B
-import Data.Text.Lazy (fromStrict)
+import Data.Text.Lazy (fromStrict,unpack)
+import qualified Data.Text.Lazy.Encoding as T
 import Data.List (isInfixOf)
 
 import Network.Wai.Handler.WebSockets
@@ -65,10 +66,14 @@ app' buildState = do
   get (regex "^/file/(.*)$") $ do
     path <- param "1"
     checkPath path $ do
-      cnt <- liftIO $ do
-        B.readFile ((bsRoot buildState) </> path)
-      setHeader "Content-Type" $ fromStrict $ getMIMEText path
-      raw cnt
+      let fp = (bsRoot buildState) </> path
+      ex <- liftIO $ doesFileExist fp
+      if ex 
+          then do
+            cnt <- liftIO $ B.readFile fp
+            setHeader "Content-Type" $ fromStrict $ getMIMEText path
+            raw cnt
+          else status notFound404
   put (regex "^/file/(.*)$") $ do
     path <- param "1"
     checkPath path $ do
@@ -105,6 +110,12 @@ app' buildState = do
         then status ok200
         else status noContent204
       json Null
+  post (regex "^/launch/(.*)$") $ do
+    name <- param "1"
+    bs <- body
+    let s = unpack $ T.decodeUtf8 bs
+    liftIO $ launch name s buildState
+    json Null
 
 checkPath :: FilePath -> ActionM () -> ActionM ()
 checkPath path f = do

@@ -63,62 +63,68 @@
       properties: {
       },
       messageReceived: function(e){
-        var loads=e.detail.data;
+        var data=e.detail.data;
         this.$.xws.send("OK");
-        console.log(e.detail.data);
-        if (loads){
-          var thisLoad={};
-          for (var a=0;a<loads.length;a++){
-            var load=loads[a];
-            var path=load.file;
-            if (path){
-              if (!thisLoad[path]){
-                thisLoad[path]=true;
-                var st=this.status[path];
-                if (st){
-                  st.message=[];
-                }
-              }
-              if (load.severity){
-                var st=this.status[path];
-                if (!st){
-                  st={"mime":load.mime,"messages":[]};
-                  this.status[path]=st;
-                }
-
-                if (load.message.length>1){
-                  if (load.message[0].indexOf(path)>-1){
-                    load.message.splice(0,1);
+        console.log(data);
+        if (data){
+          var loads=data.loads;
+          var process=data.process;
+          if (loads){
+            var thisLoad={};
+            for (var a=0;a<loads.length;a++){
+              var load=loads[a];
+              var path=load.file;
+              if (path){
+                if (!thisLoad[path]){
+                  thisLoad[path]=true;
+                  var st=this.status[path];
+                  if (st){
+                    st.message=[];
                   }
                 }
-                st.messages.push({"severity":load.severity,"line":load.line,"column":load.column,"message":load.message});
-              } else {
-                this.status[path]={"module":load.module,"mime":load.mime,"messages":[]};
+                if (load.severity){
+                  var st=this.status[path];
+                  if (!st){
+                    st={"mime":load.mime,"messages":[]};
+                    this.status[path]=st;
+                  }
+  
+                  if (load.message.length>1){
+                    if (load.message[0].indexOf(path)>-1){
+                      load.message.splice(0,1);
+                    }
+                  }
+                  st.messages.push({"severity":load.severity,"line":load.line,"column":load.column,"message":load.message});
+                } else {
+                  this.status[path]={"module":load.module,"mime":load.mime,"messages":[]};
+                }
               }
             }
-          }
-          this.fire("status-changed",this.status);
-          var errs=[];
-          var warns=[];
-          for (var p in this.status){
-            var st=this.status[p];
-            var msgs=st.messages;
-            for (var a=0;a<msgs.length;a++){
-              var m=msgs[a];
-              var it={"path":p,"type":"file","mime":st.mime,"details":m};
-              if (m.severity==="Error"){
-                errs.push(it);
-              } else if (m.severity==="Warning"){
-                warns.push(it);
+            this.fire("status-changed",this.status);
+            var errs=[];
+            var warns=[];
+            for (var p in this.status){
+              var st=this.status[p];
+              var msgs=st.messages;
+              for (var a=0;a<msgs.length;a++){
+                var m=msgs[a];
+                var it={"path":p,"type":"file","mime":st.mime,"details":m};
+                if (m.severity==="Error"){
+                  errs.push(it);
+                } else if (m.severity==="Warning"){
+                  warns.push(it);
+                }
               }
             }
+            this.errorCount=errs.length;
+            this.warningCount=warns.length;
+            this.errors=errs;
+            this.warnings=warns;
+            this.$.errorBadge.style.visibility=this.errorCount>0?"visible":"hidden";
+            this.$.warningBadge.style.visibility=this.warningCount>0?"visible":"hidden";
+          } else if (process){
+            this.fire("process-stream",data);
           }
-          this.errorCount=errs.length;
-          this.warningCount=warns.length;
-          this.errors=errs;
-          this.warnings=warns;
-          this.$.errorBadge.style.visibility=this.errorCount>0?"visible":"hidden";
-          this.$.warningBadge.style.visibility=this.warningCount>0?"visible":"hidden";
         }
       },
       ready: function(){
@@ -170,3 +176,4 @@
   </script>
 
 </dom-module>
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>

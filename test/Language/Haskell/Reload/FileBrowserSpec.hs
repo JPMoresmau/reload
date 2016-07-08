@@ -183,4 +183,5 @@ myMimes :: HM.HashMap String Text
 myMimes = HM.insert ".yaml" "text/x-yaml" $
           HM.insert ".cabal" "text/x-cabal" $
           HM.insert ".lhs" "text/x-haskell" $
-          HM.insert ".hs" "text/x-haskell" HM.empty
+          HM.insert ".hs" "text/x-haskell" $
+          HM.insert ".json" "application/json" HM.empty

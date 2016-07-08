@@ -1,6 +1,8 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/editor-icons.html">
+<link rel="import" href="../bower_components/iron-icons/maps-icons.html">
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-tooltip/paper-tooltip.html">
@@ -41,6 +43,15 @@
       <paper-tooltip for="new_obj" offset="0">New...</paper-tooltip>
       <paper-icon-button id="delete" icon="delete" alt="Delete" on-tap="deletePath" disabled></paper-icon-button>
       <paper-tooltip for="delete" offset="0">Delete...</paper-tooltip>
+      <paper-menu-button>
+         <paper-icon-button id="project" icon="build" alt="Project actions..." class="dropdown-trigger"></paper-icon-button>
+         <paper-menu class="dropdown-content">
+            <paper-icon-item on-tap="build"><iron-icon icon="build" alt="Build" item-icon></iron-icon>Build</paper-icon-item>
+            <paper-icon-item on-tap="test"><iron-icon icon="check" alt="Test" item-icon></iron-icon>Build and Test</paper-icon-item>
+            <paper-icon-item on-tap="bench"><iron-icon icon="editor:insert-chart" alt="Bench" item-icon></iron-icon>Build and Benchmark</paper-icon-item>
+            <paper-icon-item on-tap="run"><iron-icon icon="maps:directions-run" alt="Run..." item-icon></iron-icon>Run...</paper-icon-item>
+         </paper-menu>
+      </paper-menu-button>
     </app-toolbar>
 
     <paper-dialog id="new_folder_dialog" on-iron-overlay-closed="folderClosed">
@@ -166,8 +177,18 @@
         if (e.detail.status==200){
           this.fire("file-system-changed",{"deleted":this.lastDeleted});
         }
+      },
+      build:function(e){
+        this.fire("project-action",{"action":"build"});
+      },
+      test:function(e){
+        this.fire("project-action",{"action":"test"});
+      },
+      bench:function(e){
+        this.fire("project-action",{"action":"bench"});
       }
     });
   </script>
 
 </dom-module>
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>

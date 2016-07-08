@@ -55,6 +55,9 @@
       'mime': {
         type: String,
         observer: "mimeChanged"
+      } ,
+      'type': {
+        type: String
       }
     },
     pathChanged: function(){
@@ -62,7 +65,9 @@
       this.$.editor.onChange=function(e){};
       this.$.editor.value="";
       if (this.path){
-        this.$.ajax.generateRequest();
+        if ("process"!=this.type){
+          this.$.ajax.generateRequest();
+        }
         this.$.editor.style.display='block';
       } else {
         this.$.editor.style.display='none';
@@ -104,6 +109,13 @@
       var ed=this.$.editor;
       this.$.ajaxPut.body=ed.value;
       this.$.ajaxPut.generateRequest();
+      if (this.path==="reload.json"){
+        try {
+         this.fire("config-changed",JSON.parse(ed.value));
+        } catch (e){
+          // not valid JSON
+        }
+      }
     },
     fileOpened: function(e){
       if (e && e.detail){
@@ -111,10 +123,12 @@
         if (e.detail.path==this.path){
           this.setDetails();
         }
+        this.type=e.detail.type;
         this.path=e.detail.path;
         this.mime=e.detail.mime;
 
       } else {
+        this.type=null;
         this.details=null;
         this.path=null;
         this.mime="text/plain";
@@ -154,7 +168,26 @@
         }
         ed.editor.getSession().setAnnotations(anns);
       }
+    },
+    addLine: function(text){
+      var ed=this.$.editor;
+      var session=ed.editor.getSession();
+      session.insert({
+         row: session.getLength(),
+         column: 0
+      }, "\n" + text);
+
+    },
+    setValue: function(text){
+      var ed=this.$.editor;
+      ed.value=text;
+      ed.editor.clearSelection( );
+      ed.editor.moveCursorTo(0,0);
+      ed.editor.focus();
     }
   });
   </script>
 </dom-module>
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
