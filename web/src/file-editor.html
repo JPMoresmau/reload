@@ -12,8 +12,8 @@
   }
   .card {
     box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-    padding: 8px;
-    margin: 12px;
+    padding: 0;
+    margin: 0;
     border-radius: 5px;
     background-color: #fff;
     color: #757575;
@@ -26,10 +26,10 @@
 
   juicy-ace-editor {
     position:absolute;
-    bottom: 10px;
-    top: 10px;
-    right: 10px;
-    left: 10px;
+    bottom: 0px;
+    top: 4px;
+    right: 0px;
+    left: 0px;
     display: none;
   }
   </style>
@@ -111,7 +111,9 @@
       this.$.ajaxPut.generateRequest();
       if (this.path==="reload.json"){
         try {
-         this.fire("config-changed",JSON.parse(ed.value));
+         var c=JSON.parse(ed.value);
+         this.fire("config-changed",c);
+         this.setConfig(c);
         } catch (e){
           // not valid JSON
         }
@@ -184,10 +186,25 @@
       ed.editor.clearSelection( );
       ed.editor.moveCursorTo(0,0);
       ed.editor.focus();
+    },
+    setConfig: function(c){
+      if (c && c.editor){
+        var ed=this.$.editor;
+        for (var i in c.editor){
+          var val = c.editor[i];
+          if (i==="theme"){
+            if (val.indexOf("/")==-1){
+              val="ace/theme/"+val.toLowerCase().replace(' ','_');
+            }
+          }
+          ed.setAttribute(i,val);
+        }
+      }
     }
   });
   </script>
 </dom-module>
 <script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
 <script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
-<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
+
+<script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script><script>setInterval(function(){var x;if(window.XMLHttpRequest){x=new XMLHttpRequest();}else{x=new ActiveXObject("Microsoft.XMLHTTP");}x.open("GET","/_ping",false);x.send();},60000)</script>
