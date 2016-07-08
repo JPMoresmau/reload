@@ -61,7 +61,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       on-response="handleConfigResponse"></iron-ajax>
   <iron-ajax id="ajaxProjectAction" url="/launch" handle-as="json" method="POST"
       ></iron-ajax>
-
+      <iron-ajax id="ajaxPing" url="/ping" handle-as="json" method="GET"
+          ></iron-ajax>
 
     <app-location route="{{route}}"></app-location>
     <app-route
@@ -189,6 +190,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.notifyEditor = true;
           this.config= {};
           this.processes={};
+          var aj=this.$.ajaxPing;
+          setInterval(function(){aj.generateRequest();},30*1000);
       },
       showIcon: function(item){
         if (item.mime){

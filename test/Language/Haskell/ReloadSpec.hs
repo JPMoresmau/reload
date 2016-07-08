@@ -13,6 +13,8 @@ spec = with (app False) $ do
   describe "GET /" $ do
     it "responds with 200 /" $ do
       get "/" `shouldRespondWith` 200
+    it "responds with 200 /ping" $ do
+        get "/ping" `shouldRespondWith` 200
     it "doesn't accept .. " $ do
       get "/images/../../app/Main.hs" `shouldRespondWith` 404
     it "doesn't accept absolute " $ do

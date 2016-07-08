@@ -1,4 +1,8 @@
-{-# LANGUAGE OverloadedStrings, QuasiQuotes, ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings, QuasiQuotes, ScopedTypeVariables,CPP #-}
+-- | The definition of the Scotty application, and lauching code
+-- the launch code is borrowed from <https://github.com/yesodweb/wai/blob/master/wai-handler-launch/Network/Wai/Handler/Launch.hs>
+-- but we couldn't reuse the library because it injects code to every HTML page, so here it's going to inject the code to HTML code we want to edit
+-- my-app.html does the pinging from the client, no need to inject JS code
 module Language.Haskell.Reload (runApp, app) where
 
 import Language.Haskell.Reload.Build
@@ -6,7 +10,7 @@ import Language.Haskell.Reload.FileBrowser
 
 import           Data.Aeson (Value(..),encode)
 import           Network.Wai
-import           Network.Wai.Handler.Launch
+import           Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Static
 import Network.HTTP.Types.Status
 import Web.Scotty
@@ -23,13 +27,26 @@ import Data.List (isInfixOf)
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
 import Control.Concurrent
+import Control.Concurrent.Async (race)
 import Control.Exception
+import Data.IORef
 
-app' :: BuildState -> ScottyM ()
-app' buildState = do
+#if WINDOWS
+import Foreign
+import Foreign.C.String
+#else
+import System.Process (rawSystem)
+#endif
+
+scottyDef :: IORef Bool -> BuildState -> ScottyM ()
+scottyDef active buildState = do
   middleware $ staticPolicy (addBase "web")
   middleware $ logStdout
   get "/" $ file "web/index.html"
+  get (regex "^/ping$") $ do
+    liftIO $ writeIORef active True
+    status ok200
+    json Null
   get (regex "^/files(.*)$") $ do
     path <- param "1"
     let norm = case path of
@@ -68,7 +85,7 @@ app' buildState = do
     checkPath path $ do
       let fp = (bsRoot buildState) </> path
       ex <- liftIO $ doesFileExist fp
-      if ex 
+      if ex
           then do
             cnt <- liftIO $ B.readFile fp
             setHeader "Content-Type" $ fromStrict $ getMIMEText path
@@ -125,14 +142,19 @@ checkPath path f = do
       json Null
     else f
 
-app :: Bool -> IO Application
-app withRepl = do
+fullApp :: IORef Bool -> Bool -> IO Application
+fullApp active withRepl = do
   root <- getCurrentDirectory
   buildResult <- newEmptyMVar
   buildState<- startBuild root buildResult withRepl
   putStrLn $ "Ready!"
-  sco <- scottyApp $ app' buildState
+  sco <- scottyApp $ scottyDef active buildState
   return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
+
+app :: Bool -> IO Application
+app withRepl = do
+  active <- newIORef True
+  fullApp active withRepl
 
 wsApp :: (MVar Value) -> ServerApp
 wsApp buildResult pending_conn = do
@@ -153,6 +175,43 @@ wsApp buildResult pending_conn = do
 
 runApp :: Int -> IO ()
 runApp port = do --scotty port app
-    --let setts = setPort port defaultSettings
+    ready <- newEmptyMVar
+    let setts =
+                setBeforeMainLoop (putMVar ready ()) $
+                setPort port defaultSettings
     putStrLn $ "Preparing to serve on http://localhost:" ++(show port)++"..."
-    runUrlPort port "" =<< app True
+    active <- newIORef True
+    fmap (either id id) $ race
+          -- serve app, keep updating the activity flag
+          (runSettings setts =<< fullApp active True)
+          -- wait for server startup, launch browser, poll until server idle
+          (takeMVar ready >> launchBrowser port "" >> loop active)
+
+loop :: IORef Bool -> IO ()
+loop active = do
+  let seconds = 120
+  threadDelay $ 1000000 * seconds
+  b <- readIORef active
+  if b
+      then writeIORef active False >> loop active
+      else return ()
+
+
+#if WINDOWS
+foreign import ccall "launch"
+    launch' :: Int -> CString -> IO ()
+#endif
+
+launchBrowser :: Int -> String -> IO ()
+
+#if WINDOWS
+launchBrowser port s = withCString s $ launch' port
+#else
+launchBrowser port s = forkIO (rawSystem
+#if MAC
+    "open"
+#else
+    "xdg-open"
+#endif
+    ["http://127.0.0.1:" ++ show port ++ "/" ++ s] >> return ()) >> return ()
+#endif
