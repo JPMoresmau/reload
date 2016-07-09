@@ -96,10 +96,8 @@
     },
     handleResponse: function(e){
       var ed=this.$.editor;
-      ed.value=e.detail.response;
-      ed.editor.clearSelection( );
-      ed.editor.moveCursorTo(0,0);
-      ed.editor.focus();
+      ed.editor.getSession().setValue(e.detail.response);
+      this.resetEditor();
       this.setDetails();
       this.listen(this.$.editor, 'change', 'textChange');
       this.updateStatus();
@@ -180,12 +178,16 @@
       }, "\n" + text);
 
     },
-    setValue: function(text){
+    resetEditor: function(){
       var ed=this.$.editor;
-      ed.value=text;
       ed.editor.clearSelection( );
       ed.editor.moveCursorTo(0,0);
       ed.editor.focus();
+    },
+    setValue: function(text){
+      var ed=this.$.editor;
+      ed.editor.getSession().setValue(text);
+      this.resetEditor();
     },
     setConfig: function(c){
       if (c && c.editor){
