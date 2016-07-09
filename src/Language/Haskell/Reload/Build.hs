@@ -1,10 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings,ScopedTypeVariables #-}
 module Language.Haskell.Reload.Build where
 
 import Language.Haskell.Reload.FileBrowser
 import Language.Haskell.Reload.Project
 
 import Control.Concurrent.MVar
+import Control.Exception.Base
 import Data.Aeson
 import Language.Haskell.Ghcid
 import Control.Monad
@@ -67,18 +68,23 @@ startBuild root buildResult withRepl= do
 startSessions :: FilePath -> MVar Value -> IO [ReplTarget]
 startSessions root buildResult = do
   mcabal <- cabalFileInFolder root
-  (tgts,loads) <- case mcabal of
-            Nothing -> return ([],[])
-            Just cf -> do
-              grps <- readTargetGroups cf
-              unzip <$> mapM (replTarget root) grps
-  _ <- tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
-  return tgts
+  catch ( do
+    (tgts,loads) <- case mcabal of
+              Nothing -> return ([],[])
+              Just cf -> do
+                grps <- readTargetGroups cf
+                unzip <$> mapM (replTarget root) grps
+    _ <- tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
+    return tgts
+    )
+    (\(e::GhciError) -> do
+      putStrLn $ "startSessions error:" ++ (show e)
+      return [])
 
 rebuild :: BuildState -> FilePath -> IO ()
 rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
   ghci <- readIORef mghci
-  if shouldRestart path
+  if null ghci || shouldRestart path
     then
       restartBuild bs
     else do
@@ -86,10 +92,15 @@ rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
       --putStrLn $ "sess:" ++ (show $ length sess)
       loads <- withMVar int $ \_-> do
         --putStrLn "got int"
-        mapM_ (interrupt . rtGhci) sess
-        loads <- mapM (reload . rtGhci) sess
-        --putStrLn $ "put int:" ++ (show loads)
-        return loads
+        catch (do
+          mapM_ (interrupt . rtGhci) sess
+          loads <- mapM (reload . rtGhci) sess
+          --putStrLn $ "put int:" ++ (show loads)
+          return loads
+          )
+          (\(e::GhciError) -> do
+            putStrLn $ "rebuild error:" ++ (show e)
+            return [])
       when (not $ null loads) $ do
         let cloads = ordNub $ concat loads
         ok1 <- tryPutMVar buildResult $ loadsToValue root cloads
@@ -100,6 +111,7 @@ rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
 restartBuild :: BuildState -> IO ()
 restartBuild (BuildState root buildResult mghci _ _) = do
   ghci <- readIORef mghci
+  putStrLn $ "Rebuilding:"++(show $ length ghci)
   _ <- mapM (quit . rtGhci) ghci
   tgts <- startSessions root buildResult
   writeIORef mghci tgts
@@ -153,4 +165,3 @@ launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
         line <- hGetLine h
         putMVar buildResult (object ["process" .= name, "line" .= line, "stream" .= str])
       when ("out" == str) $ putMVar buildResult (object ["process" .= name, "line" .= ("<end>"::T.Text), "stream" .= str])
-      

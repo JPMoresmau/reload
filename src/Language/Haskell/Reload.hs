@@ -14,7 +14,7 @@ import           Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Static
 import Network.HTTP.Types.Status
 import Web.Scotty
-import Network.Wai.Middleware.RequestLogger (logStdout)
+-- import Network.Wai.Middleware.RequestLogger (logStdout)
 import System.Directory
 import Control.Monad
 import Control.Monad.IO.Class
@@ -41,7 +41,7 @@ import System.Process (rawSystem)
 scottyDef :: IORef Bool -> BuildState -> ScottyM ()
 scottyDef active buildState = do
   middleware $ staticPolicy (addBase "web")
-  middleware $ logStdout
+  -- middleware $ logStdout
   get "/" $ file "web/index.html"
   get (regex "^/ping$") $ do
     liftIO $ writeIORef active True
