@@ -133,6 +133,8 @@ scottyDef active buildState = do
     let s = unpack $ T.decodeUtf8 bs
     liftIO $ launch name s buildState
     json Null
+  get (regex "^/root$") $ do
+    json $ bsRoot buildState
 
 checkPath :: FilePath -> ActionM () -> ActionM ()
 checkPath path f = do

@@ -58,6 +58,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ></iron-ajax>
       <iron-ajax id="ajaxPing" url="/ping" handle-as="json" method="GET"
           ></iron-ajax>
+    <iron-ajax id="ajaxRoot" url="/root" auto handle-as="json" method="GET" on-response="handleRootResponse"
+          ></iron-ajax>
 
     <app-location route="{{route}}"></app-location>
     <app-route
@@ -235,6 +237,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       },
       configChanged : function (e){
         this.config=e.detail;
+      },
+      handleRootResponse: function(e){
+        var root=e.detail.response;
+        document.title="Reload Haskell IDE: "+root;
       },
       projectAction: function(e){
         var act=e.detail.action;
