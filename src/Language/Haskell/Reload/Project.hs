@@ -1,8 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.Reload.Project where
 
+import Data.Aeson
 import Data.List (isPrefixOf)
 import Data.Maybe
-
+import qualified Data.Text as T
 import Distribution.PackageDescription hiding (Library, Executable, TestSuite, Benchmark)
 import Distribution.PackageDescription.Parse
 import Distribution.PackageDescription.Configuration
@@ -14,11 +16,22 @@ import System.FilePath
 data TargetType = Library | Executable | TestSuite | Benchmark
   deriving (Read,Show,Eq,Ord,Bounded,Enum)
 
+instance ToJSON TargetType where
+  toJSON = String . T.pack . show
+
+instance FromJSON TargetType where
+  parseJSON (String s) = pure $ read $ T.unpack s
+  parseJSON _ = fail "TargetType"
+
 data Target = Target
-  { tType::TargetType
+  { tType :: TargetType
   , tName :: String
   , tSourceDirs :: [FilePath]
   } deriving (Read,Show,Eq,Ord)
+
+instance ToJSON Target where
+  toJSON (Target t n _) = object ["type" .= t, "name" .= n]
+
 
 readTargets :: FilePath -> IO [Target]
 readTargets cabalFile = do
@@ -35,6 +48,9 @@ data ReplTargetGroup = ReplTargetGroup
  { rtgName :: String
  , rtgTargets :: [Target]
  } deriving (Read,Show,Eq,Ord)
+
+instance ToJSON ReplTargetGroup where
+  toJSON (ReplTargetGroup n tgts) = object ["name" .= n, "targets" .= tgts]
 
 targetGroups :: [Target] -> [ReplTargetGroup]
 targetGroups tgts

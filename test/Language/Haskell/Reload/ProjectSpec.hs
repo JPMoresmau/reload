@@ -1,10 +1,14 @@
+{-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 module Language.Haskell.Reload.ProjectSpec where
 
+import           Language.Haskell.Reload (app)
 import Language.Haskell.Reload.Project
 
 import           Test.Hspec
 import System.Directory
 import System.FilePath
+import           Test.Hspec.Wai
+import           Test.Hspec.Wai.JSON
 
 spec :: Spec
 spec = do
@@ -53,3 +57,12 @@ spec = do
       tgts `shouldBe` [Target Library "" ["src"],Target Executable "reload-exe" ["app"],Target TestSuite "reload-test" ["src","test"]]
       let grps = targetGroups tgts
       grps `shouldBe` [ReplTargetGroup "" [Target Library "" ["src"],Target Executable "reload-exe" ["app"]],ReplTargetGroup "reload-test" [Target TestSuite "reload-test" ["src","test"]]]
+  describe "GET targets"$ do
+    with (app False) $ 
+      it "get our own targets" $ do
+        get "/targets" `shouldRespondWith` [json|[{name:"",type:"Library"},{name:"reload-exe",type:"Executable"},{name:"reload-test",type:"TestSuite"}]|] {matchStatus = 200}
+  describe "GET targetGroupss"$ do
+    with (app False) $ 
+      it "get our own target groups" $ do
+        get "/targetGroups" `shouldRespondWith` [json|[{name:"",targets:[{name:"",type:"Library"},{name:"reload-exe",type:"Executable"}]},{name:"reload-test",targets:[{name:"reload-test",type:"TestSuite"}]}]|] {matchStatus = 200}
+  

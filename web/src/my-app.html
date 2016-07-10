@@ -234,9 +234,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       handleConfigResponse : function(e){
         this.config=e.detail.response;
         this.$.editor.setConfig(this.config);
+        this.runActions(this.config);
       },
       configChanged : function (e){
         this.config=e.detail;
+        this.runActions(this.config);
+      },
+      runActions : function(config){
+        var acts=[];
+        for (var i in config["actions"]){
+          if (i!="build" && i!="test" && i!="bench"){
+            acts.push(i);
+          }
+        }
+        this.$.fileActions.setRunActions(acts);
       },
       handleRootResponse: function(e){
         var root=e.detail.response;

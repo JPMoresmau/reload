@@ -29,7 +29,9 @@
     "paper-menu-button": "PolymerElements/paper-menu-button#^1.1.1",
     "paper-menu": "PolymerElements/paper-menu#^1.2.2",
     "x-websocket": "mdrmtz/x-websocket#^1.0.3",
-    "paper-badge": "PolymerElements/paper-badge#^1.1.2"
+    "paper-badge": "PolymerElements/paper-badge#^1.1.2",
+    "paper-radio-group": "PolymerElements/paper-radio-group#^1.2.0",
+    "paper-radio-button": "PolymerElements/paper-radio-button#^1.2.1"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

@@ -13,7 +13,8 @@
 <link rel="import" href="../bower_components/paper-menu/paper-menu.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
-
+<link rel="import" href="../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../bower_components/paper-radio-group/paper-radio-group.html">
 
 <dom-module id="file-actions">
   <style>
@@ -33,7 +34,7 @@
     <iron-ajax id="creationAjax" handle-as="json" on-response="handleCreation" method="PUT"></iron-ajax>
     <iron-ajax id="deletionAjax" handle-as="json" on-response="handleDeletion" method="DELETE"></iron-ajax>
     <app-toolbar>
-      <paper-menu-button>
+      <paper-menu-button id="new_menu">
         <paper-icon-button id="new_obj" icon="create" alt="New..." class="dropdown-trigger"></paper-icon-button>
         <paper-menu class="dropdown-content">
           <paper-icon-item on-tap="newFolder"><iron-icon src="/images/folder_new.png" alt="New Folder..." item-icon></iron-icon>New Folder...</paper-icon-item>
@@ -43,13 +44,13 @@
       <paper-tooltip for="new_obj" offset="0">New...</paper-tooltip>
       <paper-icon-button id="delete" icon="delete" alt="Delete" on-tap="deletePath" disabled></paper-icon-button>
       <paper-tooltip for="delete" offset="0">Delete...</paper-tooltip>
-      <paper-menu-button>
+      <paper-menu-button id="project_menu">
          <paper-icon-button id="project" icon="build" alt="Project actions..." class="dropdown-trigger"></paper-icon-button>
          <paper-menu class="dropdown-content">
             <paper-icon-item on-tap="build"><iron-icon icon="build" alt="Build" item-icon></iron-icon>Build</paper-icon-item>
             <paper-icon-item on-tap="test"><iron-icon icon="check" alt="Test" item-icon></iron-icon>Build and Test</paper-icon-item>
             <paper-icon-item on-tap="bench"><iron-icon icon="editor:insert-chart" alt="Bench" item-icon></iron-icon>Build and Benchmark</paper-icon-item>
-            <paper-icon-item on-tap="run"><iron-icon icon="maps:directions-run" alt="Run..." item-icon></iron-icon>Run...</paper-icon-item>
+            <paper-icon-item on-tap="runD"><iron-icon icon="maps:directions-run" alt="Run..." item-icon></iron-icon>Run...</paper-icon-item>
          </paper-menu>
       </paper-menu-button>
     </app-toolbar>
@@ -81,7 +82,20 @@
         <paper-button dialog-confirm>Accept</paper-button>
       </div>
     </paper-dialog>
-
+    
+    <paper-dialog id="run_dialog" on-iron-overlay-closed="runClosed">
+      <h2>Run</h2>
+      <paper-radio-group id="run_group">
+        <template is="dom-repeat" items="{{runActions}}">
+          <paper-radio-button name="{{item}}">{{item}}</paper-radio-button>
+        </template> 
+      </paper-radio-group>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Cancel</paper-button>
+        <paper-button dialog-confirm>Run</paper-button>
+      </div>
+    </paper-dialog>
+    
   </template>
 
   <script>
@@ -95,6 +109,7 @@
       selectedPath: null,
       lastCreated: null,
       lastDeleted: null,
+      runActions: [],
       pathSelected: function(e){
         var tgt=e.detail;
         if (this.selectedPath){
@@ -124,10 +139,12 @@
         }
       },
       newFile: function(){
+        this.$.new_menu.close();
         this.$.new_file_dialog_path.value=this.selectedPathName(true);
         this.$.new_file_dialog.open();
       },
       newFolder: function(){
+        this.$.new_menu.close();
         this.$.new_folder_dialog_path.value=this.selectedPathName(true);
         this.$.new_folder_dialog.open();
       },
@@ -179,13 +196,32 @@
         }
       },
       build:function(e){
+        this.$.project_menu.close();
         this.fire("project-action",{"action":"build"});
       },
       test:function(e){
+        this.$.project_menu.close();
         this.fire("project-action",{"action":"test"});
       },
       bench:function(e){
+        this.$.project_menu.close();
         this.fire("project-action",{"action":"bench"});
+      },
+      runD: function(e){
+        this.$.project_menu.close();
+        this.$.run_dialog.open();
+      },
+      runClosed: function(e){
+        if (e.detail.confirmed){
+          var sel=this.$.run_group.selected;
+          if (sel){
+            this.fire("project-action",{"action":sel});
+          }
+        }
+      },
+      setRunActions: function(acts){
+        this.runActions=acts;
+        this.notifyPath('runActions');
       }
     });
   </script>

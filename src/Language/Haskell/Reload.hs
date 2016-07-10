@@ -7,6 +7,7 @@ module Language.Haskell.Reload (runApp, app) where
 
 import Language.Haskell.Reload.Build
 import Language.Haskell.Reload.FileBrowser
+import Language.Haskell.Reload.Project
 
 import           Data.Aeson (Value(..),encode)
 import           Network.Wai
@@ -135,6 +136,21 @@ scottyDef active buildState = do
     json Null
   get (regex "^/root$") $ do
     json $ bsRoot buildState
+  get (regex "^/targets$") $ do
+    tgts <- liftIO $ do
+      mcabal <- cabalFileInFolder $ bsRoot buildState
+      case mcabal of
+        Nothing -> return []
+        Just cabal -> readTargets cabal
+    json tgts
+  get (regex "^/targetGroups$") $ do
+    tgts <- liftIO $ do
+      mcabal <- cabalFileInFolder $ bsRoot buildState
+      case mcabal of
+        Nothing -> return []
+        Just cabal -> readTargetGroups cabal
+    json tgts
+  
 
 checkPath :: FilePath -> ActionM () -> ActionM ()
 checkPath path f = do
