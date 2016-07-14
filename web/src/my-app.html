@@ -50,26 +50,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
 
   <template>
-
-
-  <iron-ajax id="ajax" auto url="/file/reload.json" handle-as="json"
+    <iron-ajax id="ajax" auto url="/file/reload.json" handle-as="json"
       on-response="handleConfigResponse"></iron-ajax>
-  <iron-ajax id="ajaxProjectAction" url="/launch" handle-as="json" method="POST"
+    <iron-ajax id="ajaxProjectAction" url="/launch" handle-as="json" method="POST"
       ></iron-ajax>
       <iron-ajax id="ajaxPing" url="/ping" handle-as="json" method="GET"
           ></iron-ajax>
     <iron-ajax id="ajaxRoot" url="/root" auto handle-as="json" method="GET" on-response="handleRootResponse"
           ></iron-ajax>
-
+          
     <app-location route="{{route}}"></app-location>
     <app-route
         route="{{route}}"
         pattern="/:page"
         data="{{routeData}}"
         tail="{{subroute}}"></app-route>
-
     <app-drawer-layout fullbleed>
-
       <!-- Drawer content -->
       <app-drawer>
         <!-- https://github.com/PolymerElements/app-layout/tree/master/app-drawer -->
@@ -79,10 +75,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </file-browser>
         </div>
       </app-drawer>
-
       <!-- Main content -->
       <app-header-layout has-scrolling-region>
-
         <app-header condenses reveals effects="waterfall">
           <app-toolbar>
             <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
@@ -94,7 +88,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 </template>
               </paper-menu>
             </paper-menu-button>
-            <div title id="title">[[appTitle]]</div>
+            <div main-title id="title">[[appTitle]]</div>
             <build-status on-file-selected="fileOpened" on-status-changed="statusChanged" on-process-stream="processStream"></build-status>
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
@@ -105,23 +99,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-menu-button>
           </app-toolbar>
         </app-header>
-
         <file-editor id="editor" on-config-changed="configChanged"></file-editor>
-
       </app-header-layout>
-
     </app-drawer-layout>
-
   </template>
-
   <script>
 
     Polymer({
-
       is: 'my-app',
-
       properties: {
-
       },
 
       pathSelected : function (e){
