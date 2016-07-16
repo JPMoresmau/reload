@@ -27,6 +27,10 @@ This is a very basic IDE for Haskell, running as a local web server and a web fr
 - Run arbitrary commands (stack exec something, etc.)
 - GHCi info: inside the editor, on a Haskell file, press Ctrl-I (Command-I on Mac) to get the info from ghci in a tooltip. Click again in the editor to hide the tooltip.
 
+## Running
+
+Start the executable from the root directory of your Haskell project (where the cabal and stack files reside). You can pass the port to listen to as an argument (default is 8080).
+
 ## Configuration
 
 Create a file called "reload.json" at the folder root. This is a JSON file. For the moment, is only supported something like:
