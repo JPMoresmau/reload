@@ -31,7 +31,8 @@
     "x-websocket": "mdrmtz/x-websocket#^1.0.3",
     "paper-badge": "PolymerElements/paper-badge#^1.1.2",
     "paper-radio-group": "PolymerElements/paper-radio-group#^1.2.0",
-    "paper-radio-button": "PolymerElements/paper-radio-button#^1.2.1"
+    "paper-radio-button": "PolymerElements/paper-radio-button#^1.2.1",
+    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^1.1.5"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

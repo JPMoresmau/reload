@@ -65,4 +65,12 @@ spec = do
     with (app False) $ 
       it "get our own target groups" $ do
         get "/targetGroups" `shouldRespondWith` [json|[{name:"",targets:[{name:"",type:"Library"},{name:"reload-exe",type:"Executable"}]},{name:"reload-test",targets:[{name:"reload-test",type:"TestSuite"}]}]|] {matchStatus = 200}
-  
+  describe "Converts file name to modules" $ do
+    it "matches source dirs" $ do
+      moduleName "src/Dir/Mod.hs" (ReplTargetGroup "" [Target Library "" ["src"],Target Executable "reload-exe" ["app"]]) `shouldBe` Just "Dir.Mod"
+      moduleName "app/Main.hs" (ReplTargetGroup "" [Target Library "" ["src"],Target Executable "reload-exe" ["app"]]) `shouldBe` Just "Main"
+      moduleName "Dir/Mod.hs" (ReplTargetGroup "" [Target Library "" ["."]]) `shouldBe` Just "Dir.Mod"
+    it "doesn't match source dirs" $ do
+      moduleName "test/Dir/Mod.hs" (ReplTargetGroup "" [Target Library "" ["src"],Target Executable "reload-exe" ["app"]]) `shouldBe` Nothing
+      
+      

@@ -25,6 +25,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+ 
 <link rel="import" href="file-browser.html">
 <link rel="import" href="file-actions.html">
 <link rel="import" href="file-editor.html">
@@ -90,6 +93,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-menu-button>
             <div main-title id="title">[[appTitle]]</div>
             <build-status on-file-selected="fileOpened" on-status-changed="statusChanged" on-process-stream="processStream"></build-status>
+            <paper-icon-button id="help" on-tap="onHelp" icon="help"></paper-icon-button>
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">
@@ -97,11 +101,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 <paper-icon-item on-tap="closeAll"><iron-icon icon="close" alt="Close All" item-icon></iron-icon>Close All</paper-icon-item>
               </paper-menu>
             </paper-menu-button>
+            
           </app-toolbar>
         </app-header>
         <file-editor id="editor" on-config-changed="configChanged"></file-editor>
       </app-header-layout>
     </app-drawer-layout>
+    
+    <paper-dialog id="help_dialog">
+      <h2>Help</h2>
+      <paper-dialog-scrollable>
+        <h3>Editor commands</h3>
+        <div><b>Ctrl-I</b>: Info on current word</div>
+      </paper-dialog-scrollable>
+      <div class="buttons">
+        <paper-button dialog-dismiss>Close</paper-button>
+      </div>
+    </paper-dialog>
+    
   </template>
   <script>
 
@@ -283,6 +300,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.$.editor.setValue("");
           }
         }
+      },
+      onHelp: function(e){
+        this.$.help_dialog.open();
       }
     });
 

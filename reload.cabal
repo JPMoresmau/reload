@@ -90,6 +90,7 @@ test-suite reload-test
                        Language.Haskell.ReloadSpec
                        Language.Haskell.Reload.FileBrowser
                        Language.Haskell.Reload.ProjectSpec
+                       Language.Haskell.Reload.BuildSpec
 
 source-repository head
   type:     git

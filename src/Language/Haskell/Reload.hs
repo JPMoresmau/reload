@@ -150,7 +150,12 @@ scottyDef active buildState = do
         Nothing -> return []
         Just cabal -> readTargetGroups cabal
     json tgts
-  
+  get (regex "^/info/(.*)$") $ do
+    path <- param "1"
+    s <- param "word"
+    checkPath path $ do
+      ss <- liftIO $ info buildState path s
+      json ss
 
 checkPath :: FilePath -> ActionM () -> ActionM ()
 checkPath path f = do
@@ -164,8 +169,8 @@ fullApp :: IORef Bool -> Bool -> IO Application
 fullApp active withRepl = do
   root <- getCurrentDirectory
   buildResult <- newEmptyMVar
-  buildState<- startBuild root buildResult withRepl
-  putStrLn $ "Ready!"
+  buildState <- startBuild root buildResult withRepl
+  when withRepl $ putStrLn $ "Ready!"
   sco <- scottyApp $ scottyDef active buildState
   return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
 

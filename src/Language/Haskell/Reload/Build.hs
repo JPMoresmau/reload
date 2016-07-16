@@ -7,6 +7,7 @@ import Language.Haskell.Reload.Project
 import Control.Concurrent.MVar
 import Control.Exception.Base
 import Data.Aeson
+import Data.Maybe
 import Language.Haskell.Ghcid
 import Control.Monad
 import Control.Concurrent
@@ -53,7 +54,7 @@ replTarget :: FilePath -> ReplTargetGroup -> IO (ReplTarget,[Load])
 replTarget root grp = do
   let nm=rtgName grp
   cmd <- replCommand root (projectName root) nm
-  putStrLn cmd
+  -- putStrLn cmd
   (ghci,load) <- startGhci cmd (Just root) (\_ l -> putStrLn l)
   return (ReplTarget grp ghci,load)
 
@@ -165,3 +166,30 @@ launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
         line <- hGetLine h
         putMVar buildResult (object ["process" .= name, "line" .= line, "stream" .= str])
       when ("out" == str) $ putMVar buildResult (object ["process" .= name, "line" .= ("<end>"::T.Text), "stream" .= str])
+      
+      
+withModule :: BuildState -> FilePath -> (Ghci -> IO a) -> IO (Maybe a)
+withModule bs fp f = do
+  ghci <- readIORef (bsGhci bs)
+  let mmrt = msum $ map (moduleNameGroup fp) ghci
+  case mmrt of
+    Just (m,rt) -> do
+      let act = bsAction bs
+      withMVar act $ \_->
+        void $ exec (rtGhci rt) $ ":module *" ++ m
+      Just <$> f (rtGhci rt)
+    Nothing -> return Nothing
+  where
+    moduleNameGroup fp1 rt = let
+      mg = moduleName fp1 $ rtGroup rt
+      in case mg of
+        Nothing -> Nothing
+        Just m -> Just (m,rt)
+    
+info :: BuildState -> FilePath -> String -> IO [String]
+info bs fp s = do
+  ms <- withModule bs fp $ \ghci -> do
+    let act = bsAction bs
+    withMVar act $ \_->
+        exec ghci $ ":i " ++ s
+  return $ fromMaybe [] ms

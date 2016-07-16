@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.Reload.Project where
 
+import Control.Monad
 import Data.Aeson
 import Data.List (isPrefixOf)
 import Data.Maybe
@@ -94,3 +95,21 @@ normSourceDirs rs = map norm rs
         norm r
           | last r == '/' = r
           | otherwise = r ++ "/"
+
+moduleName :: FilePath -> ReplTargetGroup -> Maybe String
+moduleName fp gr = let
+  fps = concatMap (normSourceDirs . tSourceDirs) $ rtgTargets gr
+  in msum $ map match fps
+  where
+    match r
+      | r=="" || r `isPrefixOf` fp = let
+        rel = dropExtension $ drop (length r) fp
+        in Just $ map rep rel
+      | otherwise = Nothing
+    rep c
+     | c == '/' = '.'
+     | c == '\\' = '.'
+     | otherwise = c
+
+    
+  

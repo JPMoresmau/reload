@@ -36,8 +36,9 @@
 
   <template>
     <iron-ajax id="ajax" url="/file/{{path}}" handle-as="text" on-response="handleResponse"></iron-ajax>
+    <iron-ajax id="ajaxInfo" url="/info/{{path}}" handle-as="json" on-response="handleInfo"></iron-ajax>
     <iron-ajax id="ajaxPut" url="/file/{{path}}" handle-as="text" method="PUT"></iron-ajax>
-    <div class="card">
+    <div class="card" on-tap="handleTap">
         <juicy-ace-editor id="editor" mode$="{{mode}}" softtabs="true" tabsize="2" on-change="textChange">
         </juicy-ace-editor>
     </div>
@@ -102,6 +103,26 @@
       this.listen(this.$.editor, 'change', 'textChange');
       this.updateStatus();
     },
+    handleInfo: function(e){
+      var r=e.detail.response;
+      var editor=this.$.editor.editor;
+      if (r && r.length>0){
+        var s=r.join("\n");
+        if (s){
+          var Tooltip = ace.require("ace/tooltip").Tooltip;
+          this.tooltip=new Tooltip(editor.container);
+          var c=editor.getCursorPosition();
+          var sc=editor.renderer.textToScreenCoordinates(c.row,c.column);
+          this.tooltip.show(s,sc.pageX,sc.pageY);
+        }
+      }
+    },
+    handleTap: function(e){
+      if (this.tooltip){
+        this.tooltip.hide();
+        this.tooltip=null;
+      }
+    },
     textChange: function(e){
       //console.log(e.detail);
       var ed=this.$.editor;
@@ -149,6 +170,23 @@
       this.status={};
       var ed=this.$.editor;
       ed.editor.setHighlightSelectedWord(true);
+
+      var aj=this.$.ajaxInfo;
+      var me=this;
+      this.tooltip=null;
+      ed.editor.commands.addCommand({
+        name: "info",
+        bindKey: {win: "Ctrl-I", mac: "Command-I"},
+        exec: function(editor) {
+          if (me.mime==='text/x-haskell'){
+            editor.getSelection().selectWord();
+            var word=editor.getSession().getDocument().getTextRange(editor.getSelection().getRange());
+            //console.log(word);
+            aj.url="/info/"+me.path+"?word="+word;
+            aj.generateRequest();
+          }
+        }
+      });
     },
     updateStatus: function(){
       var st=this.status[this.path];
