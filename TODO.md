@@ -1,0 +1,4 @@
+- stylish-haskell format
+- eval from interpreter
+- completion from ghci
+- use intero for extra actions

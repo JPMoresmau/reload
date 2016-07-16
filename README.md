@@ -25,6 +25,7 @@ This is a very basic IDE for Haskell, running as a local web server and a web fr
 - Display errors as an (ugly) menu and annotations in the editor
 - Build, Test and Benchmark
 - Run arbitrary commands (stack exec something, etc.)
+- GHCi info: inside the editor, on a Haskell file, press Ctrl-I (Command-I on Mac) to get the info from ghci in a tooltip. Click again in the editor to hide the tooltip.
 
 ## Configuration
 

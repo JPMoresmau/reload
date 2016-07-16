@@ -9,3 +9,5 @@ cabal.sandbox.config
 *.swp
 *.keter
 .ghci
+reload.json
+
