@@ -1,5 +1,4 @@
 - keep for each opened file the cursor position to reset it when we go back to the file
-- stylish-haskell format
 - eval from interpreter
 - completion from ghci
 - use intero for extra actions

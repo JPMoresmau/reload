@@ -69,6 +69,7 @@
         if (data){
           var loads=data.loads;
           var process=data.process;
+          var reload=data.reload;
           if (loads){
             var thisLoad={};
             for (var a=0;a<loads.length;a++){
@@ -124,6 +125,8 @@
             this.$.warningBadge.style.visibility=this.warningCount>0?"visible":"hidden";
           } else if (process){
             this.fire("process-stream",data);
+          } else if (reload){
+            this.fire("reload-file",data);
           }
         }
       },

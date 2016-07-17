@@ -152,6 +152,13 @@ launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
       let tc = if hs then "stack" else "cabal"
       return $ tc ++ drop 6 command
     else return command
+  runExec resolvedCommand root
+    (\str line -> putMVar buildResult (object ["process" .= name, "line" .= line, "stream" .= str]))
+    (\str -> when ("out" == str) $ putMVar buildResult (object ["process" .= name, "line" .= ("<end>"::T.Text), "stream" .= str]))
+
+      
+runExec :: String -> FilePath -> (String -> String -> IO()) -> (String -> IO()) -> IO()
+runExec resolvedCommand root onLine onEnd = do
   putStrLn resolvedCommand
   let cp = (shell resolvedCommand) {cwd = Just root, std_out = CreatePipe, std_err = CreatePipe}
   (_,Just out,Just err,_) <- createProcess cp
@@ -164,9 +171,8 @@ launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
       hSetBinaryMode h False
       void $ tryIOError $ forever $ do
         line <- hGetLine h
-        putMVar buildResult (object ["process" .= name, "line" .= line, "stream" .= str])
-      when ("out" == str) $ putMVar buildResult (object ["process" .= name, "line" .= ("<end>"::T.Text), "stream" .= str])
-      
+        onLine str line
+      onEnd str
       
 withModule :: BuildState -> FilePath -> (Ghci -> IO a) -> IO (Maybe a)
 withModule bs fp f = do

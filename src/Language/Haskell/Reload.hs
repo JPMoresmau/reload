@@ -6,10 +6,11 @@
 module Language.Haskell.Reload (runApp, app) where
 
 import Language.Haskell.Reload.Build
+import Language.Haskell.Reload.Config
 import Language.Haskell.Reload.FileBrowser
 import Language.Haskell.Reload.Project
 
-import           Data.Aeson (Value(..),encode)
+import           Data.Aeson (Value(..),encode,object,(.=))
 import           Network.Wai
 import           Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Static
@@ -20,6 +21,7 @@ import System.Directory
 import Control.Monad
 import Control.Monad.IO.Class
 import System.FilePath
+import System.IO
 import qualified Data.ByteString.Lazy as B
 import Data.Text.Lazy (fromStrict,unpack)
 import qualified Data.Text.Lazy.Encoding as T
@@ -156,6 +158,23 @@ scottyDef active buildState = do
     checkPath path $ do
       ss <- liftIO $ info buildState path s
       json ss
+  post (regex "^/format/(.*)$") $ do
+    path <- param "1"
+    checkPath path $ do
+      liftIO $ do
+        mc <- config
+        let f=formatCommand mc
+        let buildResult = bsBuildResult buildState
+        ior <- newIORef []
+        runExec (f ++ " " ++ path) (bsRoot buildState)
+          (\str line -> if ("out" == str)
+            then modifyIORef ior (\i->line:i)
+            else putStrLn line)
+          (\str -> when ("out" == str) $ do
+            ls <- reverse <$> readIORef ior
+            withFile path WriteMode (\h-> mapM_ (hPutStrLn h) ls)
+            putMVar buildResult (object ["reload" .= path]))
+
 
 checkPath :: FilePath -> ActionM () -> ActionM ()
 checkPath path f = do

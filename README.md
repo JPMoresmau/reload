@@ -26,6 +26,7 @@ This is a very basic IDE for Haskell, running as a local web server and a web fr
 - Build, Test and Benchmark
 - Run arbitrary commands (stack exec something, etc.)
 - GHCi info: inside the editor, on a Haskell file, press Ctrl-I (Command-I on Mac) to get the info from ghci in a tooltip. Click again in the editor to hide the tooltip.
+- Format via stylish-haskell or arbitrary command
 
 ## Running
 
@@ -39,6 +40,9 @@ Create a file called "reload.json" at the folder root. This is a JSON file. For 
 {
   "editor" : {
     "theme" : "XCode"
+    ,"actions": {
+      "format" : "/path/to/stylish-haskell"
+    }
   },
   "actions" : {
     "run1" : "stack exec echo hello"
@@ -47,6 +51,7 @@ Create a file called "reload.json" at the folder root. This is a JSON file. For 
 ```
 
 `editor.theme` is the short name for the ACE editor theme you want to use. Internally, we convert to lower case, replace spaces by underscores and prefix by ace/theme.
+`editor.actions.format` is the command used to format Haskell source files. If not specified, defaults to `stylish-haskell`, which of course must be in the path.
 
 `actions` define some actions that will be executed in the root folder. If the key is `build` it defines the command to run when you choose *Build* in the menu (default to `cabal|stack build`). You can pass any extra options there.
 If the key is `test` it defines the command to run when you choose *Build and Test* in the menu (default to `cabal|stack test`).

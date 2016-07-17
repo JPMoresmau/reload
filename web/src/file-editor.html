@@ -37,6 +37,7 @@
   <template>
     <iron-ajax id="ajax" url="/file/{{path}}" handle-as="text" on-response="handleResponse"></iron-ajax>
     <iron-ajax id="ajaxInfo" url="/info/{{path}}" handle-as="json" on-response="handleInfo"></iron-ajax>
+    <iron-ajax id="ajaxFormat" url="/format/{{path}}" handle-as="json" method="POST"></iron-ajax>
     <iron-ajax id="ajaxPut" url="/file/{{path}}" handle-as="text" method="PUT"></iron-ajax>
     <div class="card" on-tap="handleTap">
         <juicy-ace-editor id="editor" mode$="{{mode}}" softtabs="true" tabsize="2" on-change="textChange">
@@ -192,6 +193,12 @@
           aj.generateRequest();
           }
     },
+    format: function(){
+        var aj=this.$.ajaxFormat;
+        if (this.mime==='text/x-haskell'){
+          aj.generateRequest();
+        }
+    },
     updateStatus: function(){
       var st=this.status[this.path];
       var ed=this.$.editor;
@@ -243,6 +250,11 @@
           }
           ed.setAttribute(i,val);
         }
+      }
+    },
+    reloadFile: function(d){
+      if (d.reload===this.path){
+        this.pathChanged();
       }
     }
   });
