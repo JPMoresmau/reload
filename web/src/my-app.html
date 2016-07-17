@@ -27,7 +27,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
- 
+
 <link rel="import" href="file-browser.html">
 <link rel="import" href="file-actions.html">
 <link rel="import" href="file-editor.html">
@@ -61,7 +61,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           ></iron-ajax>
     <iron-ajax id="ajaxRoot" url="/root" auto handle-as="json" method="GET" on-response="handleRootResponse"
           ></iron-ajax>
-          
+
     <app-location route="{{route}}"></app-location>
     <app-route
         route="{{route}}"
@@ -97,17 +97,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">
+                <paper-icon-item on-tap="infoCurrent"><iron-icon icon="info" alt="Info" item-icon></iron-icon><b>Ctrl-I</b>: Info</paper-icon-item>
                 <paper-icon-item on-tap="closeCurrent"><iron-icon icon="close" alt="Close" item-icon></iron-icon>Close</paper-icon-item>
                 <paper-icon-item on-tap="closeAll"><iron-icon icon="close" alt="Close All" item-icon></iron-icon>Close All</paper-icon-item>
               </paper-menu>
             </paper-menu-button>
-            
+
           </app-toolbar>
         </app-header>
         <file-editor id="editor" on-config-changed="configChanged"></file-editor>
       </app-header-layout>
     </app-drawer-layout>
-    
+
     <paper-dialog id="help_dialog">
       <h2>Help</h2>
       <paper-dialog-scrollable>
@@ -118,7 +119,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-button dialog-dismiss>Close</paper-button>
       </div>
     </paper-dialog>
-    
+
   </template>
   <script>
 
@@ -208,6 +209,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           delete this.openedPaths[this.currentPath];
           this.splice('openedItems',idx,1);
           this.onClose();
+        }
+      },
+      infoCurrent:function(e){
+        if (this.currentPath){
+          this.$.editor.info();
         }
       },
       onClose: function(){
