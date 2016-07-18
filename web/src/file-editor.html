@@ -172,6 +172,7 @@
       this.status={};
       var ed=this.$.editor;
       ed.editor.setHighlightSelectedWord(true);
+      ed.editor.setOption("scrollPastEnd", true);
 
       var me=this;
       this.tooltip=null;
@@ -182,6 +183,7 @@
           me.info();
         }
       });
+      ed.editor.resize();
     },
     info: function(){
       var aj=this.$.ajaxInfo;
