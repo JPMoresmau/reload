@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, RecordWildCards #-}
+-- | Configuration handling
 module Language.Haskell.Reload.Config where
 
 import Data.Aeson
@@ -8,6 +9,7 @@ import System.Directory
 import qualified Data.Text as T
 import Data.Maybe
 
+-- | Get the configuration JSON if it exists in the current folder
 config :: IO (Maybe Value)
 config = do
   let configFile = "reload.json"
@@ -24,6 +26,7 @@ config = do
         Right v -> return v
     else return Nothing
 
+-- | Get the format command (default is stylish-haskell)
 formatCommand :: Maybe Value -> String
 formatCommand mv =
   case mv of

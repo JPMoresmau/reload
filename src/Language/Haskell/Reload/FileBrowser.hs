@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+-- | Browse the folders and files inside our root folder
 module Language.Haskell.Reload.FileBrowser
   ( FSItem(..)
   , listFiles
@@ -88,6 +89,7 @@ getMIME = mimeByExt extendedMimeMap "text/plain" . T.pack
 --  ".lhs" -> "haskell"
 --  _      -> "text"
 
+-- | Get MIME type as text
 getMIMEText :: FilePath -> T.Text
 getMIMEText = T.decodeUtf8 . getMIME
 

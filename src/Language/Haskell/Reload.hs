@@ -16,7 +16,6 @@ import           Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Static
 import Network.HTTP.Types.Status
 import Web.Scotty
--- import Network.Wai.Middleware.RequestLogger (logStdout)
 import System.Directory
 import Control.Monad
 import Control.Monad.IO.Class
@@ -41,7 +40,11 @@ import Foreign.C.String
 import System.Process (rawSystem)
 #endif
 
-scottyDef :: IORef Bool -> BuildState -> ScottyM ()
+-- | The scotty application
+scottyDef 
+  :: IORef Bool -- ^ the active beacon, each ping request sets it to true
+  -> BuildState -- ^ the state we keep over the lifetime of the app
+  -> ScottyM ()
 scottyDef active buildState = do
   middleware $ staticPolicy (addBase "web")
   -- middleware $ logStdout
@@ -175,7 +178,7 @@ scottyDef active buildState = do
             withFile path WriteMode (\h-> mapM_ (hPutStrLn h) ls)
             putMVar buildResult (object ["reload" .= path]))
 
-
+-- | Forbids absolute paths and paths going back to parent
 checkPath :: FilePath -> ActionM () -> ActionM ()
 checkPath path f = do
   if (".." `isInfixOf` path || isAbsolute path)
@@ -184,7 +187,11 @@ checkPath path f = do
       json Null
     else f
 
-fullApp :: IORef Bool -> Bool -> IO Application
+-- | Build the full application
+fullApp 
+  :: IORef Bool  -- ^ the active beacon, each ping request sets it to true
+  -> Bool -- ^ Shall we start the REPL (disabled for some tests for performance)
+  -> IO Application
 fullApp active withRepl = do
   root <- getCurrentDirectory
   buildResult <- newEmptyMVar
@@ -193,12 +200,18 @@ fullApp active withRepl = do
   sco <- scottyApp $ scottyDef active buildState
   return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
 
-app :: Bool -> IO Application
+-- | Simple application builder
+app 
+  :: Bool  -- ^ Shall we start the REPL (disabled for some tests for performance)
+  -> IO Application
 app withRepl = do
   active <- newIORef True
   fullApp active withRepl
 
-wsApp :: (MVar Value) -> ServerApp
+-- | The web socket AOO
+wsApp 
+  :: (MVar Value) -- ^ The MVar for build results
+  -> ServerApp
 wsApp buildResult pending_conn = do
     conn <- acceptRequest pending_conn
     forkPingThread conn 30
@@ -215,7 +228,10 @@ wsApp buildResult pending_conn = do
         throw e
         )
 
-runApp :: Int -> IO ()
+-- | Run the application on a specific port
+runApp 
+  :: Int -- ^ The port to run on
+  -> IO ()
 runApp port = do --scotty port app
     ready <- newEmptyMVar
     let setts =
@@ -229,7 +245,10 @@ runApp port = do --scotty port app
           -- wait for server startup, launch browser, poll until server idle
           (takeMVar ready >> launchBrowser port "" >> loop active)
 
-loop :: IORef Bool -> IO ()
+-- | The active loop
+loop 
+  :: IORef Bool -- ^ The active beacon
+  -> IO ()
 loop active = do
   let seconds = 120
   threadDelay $ 1000000 * seconds
@@ -244,8 +263,11 @@ foreign import ccall "launch"
     launch' :: Int -> CString -> IO ()
 #endif
 
-launchBrowser :: Int -> String -> IO ()
-
+-- | Launch browser
+launchBrowser 
+  :: Int -- ^ Port
+  -> String -- ^ URL
+  -> IO ()
 #if WINDOWS
 launchBrowser port s = withCString s $ launch' port
 #else

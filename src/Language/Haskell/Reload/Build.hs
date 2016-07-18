@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings,ScopedTypeVariables #-}
+-- | Build and GHCi
 module Language.Haskell.Reload.Build where
 
 import Language.Haskell.Reload.FileBrowser
@@ -22,35 +23,49 @@ import System.Process
 import GHC.IO.Handle
 import System.IO.Error
 
+-- | Build information
 data BuildState = BuildState
-  { bsRoot :: FilePath
-  , bsBuildResult :: MVar Value
-  , bsGhci :: IORef [ReplTarget]
-  , bsInterrupt :: MVar ()
-  , bsAction :: MVar ()
+  { bsRoot :: FilePath -- ^ project root
+  , bsBuildResult :: MVar Value -- ^ JSON to indicate the output of a build
+  , bsGhci :: IORef [ReplTarget] -- ^ GHCi session by target
+  , bsInterrupt :: MVar () -- ^ Semaphore for actions that may interrupt others, like build
+  , bsAction :: MVar () -- ^ Semaphore for actions that can be interrupted
   }
 
+-- | Target and GHCi
 data ReplTarget = ReplTarget
   { rtGroup :: ReplTargetGroup
   , rtGhci :: Ghci
   }
 
+-- | Stack file name
 stackFile :: FilePath
 stackFile = "stack.yaml"
 
+
+-- | Do we have a stack file in the given folder?
 hasStack :: FilePath -> IO Bool
 hasStack root = do
   let stackF  = root </> stackFile
   doesFileExist stackF
 
-replCommand :: FilePath -> String -> String -> IO String
+-- | Build the REPL Command
+replCommand 
+  :: FilePath -- ^ Project root
+  -> String   -- ^ Project name
+  -> String   -- ^ Component name
+  -> IO String
 replCommand root project component = do
   isStack <- hasStack root
   return $ if isStack
               then "stack repl " ++ (if null component then "" else project ++ ":" ++ component)
               else "cabal repl " ++ (if null component then "" else " " ++ component)
 
-replTarget :: FilePath -> ReplTargetGroup -> IO (ReplTarget,[Load])
+-- | Start a GHCi session
+replTarget 
+  :: FilePath -- ^ Project root
+  -> ReplTargetGroup -- ^ Target group
+  -> IO (ReplTarget,[Load])
 replTarget root grp = do
   let nm=rtgName grp
   cmd <- replCommand root (projectName root) nm
@@ -58,7 +73,12 @@ replTarget root grp = do
   (ghci,load) <- startGhci cmd (Just root) (\_ l -> putStrLn l)
   return (ReplTarget grp ghci,load)
 
-startBuild :: FilePath -> MVar Value -> Bool -> IO BuildState
+-- | Start all GHCi sessions and build state
+startBuild 
+  :: FilePath -- ^ project root
+  -> MVar Value  -- ^ build output variable
+  -> Bool  -- ^ should we really start a REPL?
+  -> IO BuildState
 startBuild root buildResult withRepl= do
   tgts <- if withRepl then startSessions root buildResult else return []
   mghci <- newIORef tgts
@@ -66,7 +86,11 @@ startBuild root buildResult withRepl= do
   act <- newMVar ()
   return $ BuildState root buildResult mghci int act
 
-startSessions :: FilePath -> MVar Value -> IO [ReplTarget]
+-- | Start GHCi sessions
+startSessions 
+  :: FilePath  -- ^ project root
+  -> MVar Value -- ^ build output variable
+  -> IO [ReplTarget]
 startSessions root buildResult = do
   mcabal <- cabalFileInFolder root
   catch ( do
@@ -82,7 +106,11 @@ startSessions root buildResult = do
       putStrLn $ "startSessions error:" ++ (show e)
       return [])
 
-rebuild :: BuildState -> FilePath -> IO ()
+-- | Reload when a file changes
+rebuild 
+  :: BuildState -- ^ the state
+  -> FilePath -- ^ the changed file
+  -> IO ()
 rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
   ghci <- readIORef mghci
   if null ghci || shouldRestart path
@@ -109,6 +137,7 @@ rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
           void $ tryTakeMVar buildResult
           void $ tryPutMVar buildResult $ loadsToValue root cloads
 
+-- | Restart the sessio
 restartBuild :: BuildState -> IO ()
 restartBuild (BuildState root buildResult mghci _ _) = do
   ghci <- readIORef mghci
@@ -117,25 +146,29 @@ restartBuild (BuildState root buildResult mghci _ _) = do
   tgts <- startSessions root buildResult
   writeIORef mghci tgts
 
+-- | Should we restart the session (when the stack or cabal files have changed)
 shouldRestart :: FilePath -> Bool
 shouldRestart fp = let
   f = takeFileName fp
   in (f == stackFile || takeExtension f == ".cabal")
 
+-- | Convert GHCid load values into JSON
 loadsToValue :: FilePath -> [Load] -> Value
 loadsToValue root loads = object ["loads" .= map (loadToValue root) loads]
 
+-- | Convert one GHCid load value into JSON
 loadToValue :: FilePath -> Load -> Value
 loadToValue root (Loading modu file)=object ["module".=modu,"file".=(relative root file),"mime".=getMIMEText file]
 loadToValue root (Message sev file (ln,col) msg)=object ["severity".=(show sev),"file".=(relative root file),"line".=ln,"column".=col,"message".=msg,"mime".=getMIMEText file]
 
+-- | Make a path relative (sometimes paths are given absolute by GHCi)
 relative :: FilePath -> FilePath -> FilePath
 relative root fp
   | isRelative fp = fp
   | otherwise = makeRelative root fp
 
 
-
+-- | Infamous nub for Ord instances
 ordNub :: (Ord a) => [a] -> [a]
 ordNub l = go Set.empty l
   where
@@ -143,7 +176,12 @@ ordNub l = go Set.empty l
     go s (x:xs) = if x `Set.member` s then go s xs
                                       else x : go (Set.insert x s) xs
 
-launch :: T.Text -> String -> BuildState -> IO ()
+-- | Launch a command
+launch 
+  :: T.Text -- ^ Name the command is referenced by
+  -> String -- ^ Actual command
+  -> BuildState -- ^ Our state
+  -> IO ()
 launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
   void $ tryPutMVar buildResult (object ["process" .= name])
   resolvedCommand <- if ("<tool>" `isPrefixOf` command)
@@ -156,8 +194,13 @@ launch name command (BuildState root buildResult _ _ _)  = void $ forkIO $ do
     (\str line -> putMVar buildResult (object ["process" .= name, "line" .= line, "stream" .= str]))
     (\str -> when ("out" == str) $ putMVar buildResult (object ["process" .= name, "line" .= ("<end>"::T.Text), "stream" .= str]))
 
-      
-runExec :: String -> FilePath -> (String -> String -> IO()) -> (String -> IO()) -> IO()
+-- | Run an executable
+runExec 
+  :: String -- ^ Full command
+  -> FilePath -- ^ Directory to run in
+  -> (String -> String -> IO())  -- ^ Handler on each line
+  -> (String -> IO()) -- ^ Handler on end
+  -> IO()
 runExec resolvedCommand root onLine onEnd = do
   putStrLn resolvedCommand
   let cp = (shell resolvedCommand) {cwd = Just root, std_out = CreatePipe, std_err = CreatePipe}
@@ -174,7 +217,12 @@ runExec resolvedCommand root onLine onEnd = do
         onLine str line
       onEnd str
       
-withModule :: BuildState -> FilePath -> (Ghci -> IO a) -> IO (Maybe a)
+-- | Ensures GHCi is in the module given by the file path
+withModule 
+  :: BuildState -- ^ our state
+  -> FilePath -- ^ The file path
+  -> (Ghci -> IO a) -- ^ What to do in GHCi once the module is set
+  -> IO (Maybe a)
 withModule bs fp f = do
   ghci <- readIORef (bsGhci bs)
   let mmrt = msum $ map (moduleNameGroup fp) ghci
@@ -192,6 +240,7 @@ withModule bs fp f = do
         Nothing -> Nothing
         Just m -> Just (m,rt)
     
+-- | Run the :info command on the given word
 info :: BuildState -> FilePath -> String -> IO [String]
 info bs fp s = do
   ms <- withModule bs fp $ \ghci -> do
