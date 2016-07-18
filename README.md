@@ -57,3 +57,13 @@ Create a file called "reload.json" at the folder root. This is a JSON file. For 
 If the key is `test` it defines the command to run when you choose *Build and Test* in the menu (default to `cabal|stack test`).
 If the key is `bench` it defines the command to run when you choose *Build and Benchmark* in the menu (default to `cabal|stack bench`).
 If the key is something else, it will appear in the list shown when you choose *Run...* in the menu, letting you specify any command you'd like to run.
+
+## Screenshots
+
+The IDE with the XCode theme, and a silly error:
+
+![screenshot 1](doc/screenshot1.png "Screenshot 1")
+
+Running build and test shows the output in a editor as well:
+
+![screenshot 1](doc/screenshot2.png "Screenshot 2")
