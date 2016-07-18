@@ -67,6 +67,7 @@
       this.$.editor.onChange=function(e){};
       this.$.editor.value="";
       if (this.path){
+        this.$.editor.editor.setReadOnly("process"===this.type); 
         if ("process"!=this.type){
           this.$.ajax.generateRequest();
         }
