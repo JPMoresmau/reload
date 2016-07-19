@@ -60,7 +60,9 @@ scottyDef active buildState = do
                 _ -> path
     checkPath norm $ do
       fss <- liftIO $ do
-        listFiles (bsRoot buildState) norm
+        mc <- config (bsRoot buildState)
+        let hf=if showHiddenFiles mc then ShowHidden else HideHidden
+        listFiles (bsRoot buildState) norm hf
       json fss
   put (regex "^/files/(.*)$") $ do
     path <- param "1"
@@ -165,7 +167,7 @@ scottyDef active buildState = do
     path <- param "1"
     checkPath path $ do
       liftIO $ do
-        mc <- config
+        mc <- config (bsRoot buildState)
         let f=formatCommand mc
         let buildResult = bsBuildResult buildState
         ior <- newIORef []

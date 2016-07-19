@@ -53,6 +53,8 @@
             <paper-icon-item on-tap="runD"><iron-icon icon="maps:directions-run" alt="Run..." item-icon></iron-icon>Run...</paper-icon-item>
          </paper-menu>
       </paper-menu-button>
+      <paper-icon-button id="refresh" icon="refresh" alt="Refresh" on-tap="refreshPath"></paper-icon-button>
+      <paper-tooltip for="refresh" offset="0">Refresh file browser</paper-tooltip>
     </app-toolbar>
 
     <paper-dialog id="new_folder_dialog" on-iron-overlay-closed="folderClosed">
@@ -222,6 +224,9 @@
       setRunActions: function(acts){
         this.runActions=acts;
         this.notifyPath('runActions');
+      },
+      refreshPath: function(e){
+        this.fire("file-system-changed",{});
       }
     });
   </script>

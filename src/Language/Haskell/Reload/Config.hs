@@ -8,11 +8,12 @@ import qualified Data.ByteString.Lazy as BS
 import System.Directory
 import qualified Data.Text as T
 import Data.Maybe
+import System.FilePath
 
--- | Get the configuration JSON if it exists in the current folder
-config :: IO (Maybe Value)
-config = do
-  let configFile = "reload.json"
+-- | Get the configuration JSON if it exists in the given folder
+config :: FilePath -> IO (Maybe Value)
+config root = do
+  let configFile = root </> "reload.json"
   ex <- doesFileExist configFile
   if ex 
     then do
@@ -28,29 +29,39 @@ config = do
 
 -- | Get the format command (default is stylish-haskell)
 formatCommand :: Maybe Value -> String
-formatCommand mv =
-  case mv of
-    Nothing -> defCommand
-    Just v -> fromMaybe defCommand $ parseMaybe (\_->withObject "Config" extractEditor v) T.null
+formatCommand mv = extract mv defCommand ["editor","actions","format"] 
+  (\mf->  case mf of
+            Just (String f) -> T.unpack f
+            _ -> defCommand)
   where
-    defCommand = "stylish-haskell"
-    extractEditor o = do
-      me <- o .:? "editor"
-      case me of
-        Nothing -> return defCommand
-        Just e -> withObject "Editor" extractActions e
-    extractActions o = do
-      ma <- o .:? "actions"
-      case ma of
-        Nothing -> return defCommand
-        Just a -> withObject "Actions" extractFormat a
-    extractFormat o = do
-      mf <- o .:? "format"
-      case mf of
-        Just (String f) -> return $ T.unpack f
-        _ -> return defCommand
-        
+     defCommand = "stylish-haskell"
+  
+-- | Should we show hidden files?
+showHiddenFiles :: Maybe Value -> Bool
+showHiddenFiles mv = extract mv defShow ["files","hidden"] 
+  (\mf -> case mf of
+            Just (Bool b) -> b
+            _ -> defShow)
+  where
+    defShow = False
 
+-- | Extract a value from JSON, following down a path
+extract :: Maybe Value -> a -> [T.Text] -> (Maybe Value -> a) -> a
+extract mv defV paths extr = 
+  case mv of
+    Nothing -> defV
+    Just v -> fromMaybe defV $ parseMaybe (\_->withObject "Config" (extracts paths) v) T.null
+  where
+    extracts [t] o = do
+      mf <- o .:? t
+      return $ extr mf
+    extracts [] _ = return defV
+    extracts (t:ts) o = do
+      me <- o .:? t
+      case me of
+        Nothing -> return defV
+        Just e -> withObject (T.unpack t) (extracts ts) e    
+  
 {--
 import Data.Aeson
 import Data.Default

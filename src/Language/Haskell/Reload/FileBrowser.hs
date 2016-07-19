@@ -4,6 +4,7 @@ module Language.Haskell.Reload.FileBrowser
   ( FSItem(..)
   , listFiles
   , getMIMEText
+  , HiddenFiles(..)
   )where
 
 import Data.Typeable (Typeable)
@@ -18,6 +19,7 @@ import qualified Data.Map as DM
 import Network.Mime
 import Data.Aeson
 import Control.Monad
+import Data.Default
 
 -- | A File System item, wrapping the path
 data FSItem =
@@ -53,14 +55,25 @@ instance FromJSON FSItem where
           _   -> mzero
     parseJSON _          = mzero
 
+data HiddenFiles = ShowHidden | HideHidden
+  deriving (Show,Read,Eq,Ord,Bounded,Enum,Typeable)
+
+instance Default HiddenFiles where
+  def = HideHidden
 
 -- | List all files inside a given directory
-listFiles :: FilePath -> FilePath -> IO [FSItem]
-listFiles root cd = do
+listFiles :: FilePath -> FilePath -> HiddenFiles -> IO [FSItem]
+listFiles root cd hf = do
   fs <- getDirectoryContents $ root </> cd
-  let visible = filter (not . ("." `isPrefixOf`) . takeFileName) fs
+  let visible = filter (isVisible . takeFileName) fs
   sort <$> mapM tofs visible
   where
+    isVisible :: FilePath -> Bool
+    isVisible fn 
+      | fn == "." = False
+      | fn == ".." = False
+      | "." `isPrefixOf` fn = hf == ShowHidden
+      | otherwise = True 
     tofs fp = do
       let full = root </> cd </> fp
       isFile <- doesFileExist full
