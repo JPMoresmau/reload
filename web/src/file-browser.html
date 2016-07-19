@@ -100,8 +100,33 @@
         return path.split("/").pop();
       },
       fileSystemChanged: function(e){
+        var changedPath=e.detail.created || e.detail.deleted;
+        // only refresh the parent
+        if (changedPath){
+          var ix=changedPath.lastIndexOf("/");
+          if (ix>0){
+            var parent="/"+changedPath.substring(0,ix);
+            // find open file-browser
+            var allBrowsers = Polymer.dom(this.root).querySelectorAll('file-browser');
+            for (var i=0;i<allBrowsers.length;i++){
+              var b=allBrowsers[i];
+              // found it!
+              if (parent===b.parent){
+                b.fileSystemChanged({"detail":{}});
+                return;
+              // we need to go deeper
+              } else if (parent.startsWith(b.parent+"/")){
+                b.fileSystemChanged({"detail":{"created":changedPath}});
+                return;
+              }
+            }
+            
+          }
+        }
+        // recalculate
         this.items=[];
         this.$.ajax.generateRequest();
+
       },
       iconError:function(e){
         e.target.src="/images/text/plain.png";
