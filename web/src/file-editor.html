@@ -64,12 +64,15 @@
     },
     pathChanged: function(){
       this.unlisten(this.$.editor, 'change', 'textChange');
-      this.$.editor.onChange=function(e){};
+      this.editing=false;
+      this.$.editor.onChange=function(){};
       this.$.editor.value="";
       if (this.path){
-        this.$.editor.editor.setReadOnly("process"===this.type); 
+        this.$.editor.editor.setReadOnly("process"===this.type);
         if ("process"!=this.type){
           this.$.ajax.generateRequest();
+        } else {
+          this.editing=true;
         }
         this.$.editor.style.display='block';
       } else {
@@ -99,10 +102,13 @@
     },
     handleResponse: function(e){
       var ed=this.$.editor;
-      ed.editor.getSession().setValue(e.detail.response);
+      var s=ed.editor.getSession();
+      s.setValue(e.detail.response);
+      console.log("value set");
       this.resetEditor();
       this.setDetails();
       this.listen(this.$.editor, 'change', 'textChange');
+      this.editing=true;
       this.updateStatus();
     },
     handleInfo: function(e){
@@ -169,7 +175,9 @@
       }
     },
     ready: function(){
+      this.editing=false;
       this.status={};
+      this.positions = {};
       var ed=this.$.editor;
       ed.editor.setHighlightSelectedWord(true);
       ed.editor.setOption("scrollPastEnd", true);
@@ -184,6 +192,35 @@
         }
       });
       ed.editor.resize();
+
+      var s=ed.editor.getSession();
+      s.on('changeScrollTop',this.captureScrollTop.bind(this));
+      s.getSelection().on('changeCursor',this.captureCursor.bind(this));
+
+    },
+    captureScrollTop: function(){
+      if (this.path && this.editing){
+        var s=this.$.editor.editor.getSession();
+        var pos=this.positions[this.path];
+        if (!pos){
+          pos={};
+          this.positions[this.path]=pos;
+        }
+        pos.scrollTop=s.getScrollTop();
+
+      }
+    },
+    captureCursor: function(){
+      if (this.path && this.editing){
+        var ed=this.$.editor.editor;
+        var cp=ed.getCursorPosition();
+        var pos=this.positions[this.path];
+        if (!pos){
+           pos={};
+           this.positions[this.path]=pos;
+        }
+        pos.cursor=cp;
+      }
     },
     info: function(){
       var aj=this.$.ajaxInfo;
@@ -219,6 +256,15 @@
           });
         }
         ed.editor.getSession().setAnnotations(anns);
+      }
+      var pos=this.positions[this.path];
+      if (pos){
+        if (pos.scrollTop){
+          ed.editor.getSession().setScrollTop(pos.scrollTop);
+        }
+        if (pos.cursor){
+          ed.editor.moveCursorToPosition(pos.cursor);
+        }
       }
     },
     addLine: function(text){
