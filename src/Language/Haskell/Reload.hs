@@ -25,14 +25,12 @@ import qualified Data.ByteString.Lazy as B
 import Data.Text.Lazy (fromStrict,unpack)
 import qualified Data.Text.Lazy.Encoding as T
 import Data.List (isInfixOf)
-
 import Network.Wai.Handler.WebSockets
 import Network.WebSockets
 import Control.Concurrent
 import Control.Concurrent.Async (race)
 import Control.Exception
 import Data.IORef
-
 #if WINDOWS
 import Foreign
 import Foreign.C.String
@@ -162,6 +160,12 @@ scottyDef active buildState = do
     s <- param "word"
     checkPath path $ do
       ss <- liftIO $ info buildState path s
+      json ss
+  get (regex "^/complete/(.*)$") $ do
+    path <- param "1"
+    s <- param "word"
+    checkPath path $ do
+      ss <- liftIO $ complete buildState path s
       json ss
   post (regex "^/format/(.*)$") $ do
     path <- param "1"

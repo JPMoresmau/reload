@@ -1,3 +1,3 @@
 - eval from interpreter
-- completion from ghci
-- use intero for extra actions
+- use intero for extra actions (need config option for repl invocation)
+- generate data-files for directory automatically (ex: web/build/bundled)

@@ -248,3 +248,15 @@ info bs fp s = do
     withMVar act $ \_->
         exec ghci $ ":i " ++ s
   return $ fromMaybe [] ms
+
+-- | Run the :complete command on the given prefix
+-- we unquote the string literals complete returns
+complete :: BuildState -> FilePath -> String -> IO [String]
+complete bs fp s = do 
+  ms <- withModule bs fp $ \ghci -> do
+    let act = bsAction bs
+    withMVar act $ \_->
+        exec ghci $ ":complete repl \"" ++ s ++ "\""
+  return $ maybe [] (map unquote . filter (not . null) . drop 1) ms
+  where
+    unquote = tail . init -- garanteed not empty

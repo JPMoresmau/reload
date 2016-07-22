@@ -4,6 +4,8 @@
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 
 <dom-module id="file-editor">
+  <script src="../bower_components/ace-builds/src-min-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+
   <style>
 
   :host {
@@ -37,6 +39,7 @@
   <template>
     <iron-ajax id="ajax" url="/file/{{path}}" handle-as="text" on-response="handleResponse"></iron-ajax>
     <iron-ajax id="ajaxInfo" url="/info/{{path}}" handle-as="json" on-response="handleInfo"></iron-ajax>
+    <iron-ajax id="ajaxComplete" url="/complete/{{path}}" handle-as="json" on-response="handleComplete"></iron-ajax>
     <iron-ajax id="ajaxFormat" url="/format/{{path}}" handle-as="json" method="POST"></iron-ajax>
     <iron-ajax id="ajaxPut" url="/file/{{path}}" handle-as="text" method="PUT"></iron-ajax>
     <div class="card" on-tap="handleTap">
@@ -104,7 +107,6 @@
       var ed=this.$.editor;
       var s=ed.editor.getSession();
       s.setValue(e.detail.response);
-      console.log("value set");
       this.resetEditor();
       this.setDetails();
       this.listen(this.$.editor, 'change', 'textChange');
@@ -123,6 +125,15 @@
           var sc=editor.renderer.textToScreenCoordinates(c.row,c.column);
           this.tooltip.show(s,sc.pageX,sc.pageY);
         }
+      }
+    },
+    handleComplete: function(e){
+      var r=e.detail.response;
+      if (r && this.completeCallback){
+        this.completeCallback(null, r.map(function(w) {
+                        return {name: w, value: w, score: Number.MAX_VALUE, meta: "ghci"}
+                    }));
+        this.completeCallback=null;
       }
     },
     handleTap: function(e){
@@ -181,8 +192,45 @@
       var ed=this.$.editor;
       ed.editor.setHighlightSelectedWord(true);
       ed.editor.setOption("scrollPastEnd", true);
+      var langTools =ace.require("ace/ext/language_tools");
 
+      ed.editor.setOptions({
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: false
+      });
       var me=this;
+
+      var ghciCompleter = {
+        getCompletions: function(editor, session, pos, prefix, callback) {
+          if (me.mime==='text/x-haskell'){
+            session.$selectLongWords = true;
+            var Selection=ace.require("ace/selection").Selection;
+            var sel=new Selection(session);
+            sel.setSelectionRange(session.getSelection().getRange());
+            sel.moveCursorToPosition(editor.getCursorPosition());
+            sel.selectWordLeft();
+            var prev=editor.getSession().getTextRange(sel.getRange());
+             while (prev && prev.length>0 && prev.indexOf(' ')==-1 && sel.getRange().start.column>1){
+              sel.selectWordLeft();
+              prev=editor.getSession().getTextRange(sel.getRange());
+            }
+            if (prev && prev.startsWith("import")){
+              prefix=prev;
+            }
+            console.log("completions for:"+prefix,":previous:"+prev);
+            var aj=me.$.ajaxComplete;
+            me.completeCallback=callback;
+            aj.url="/complete/"+me.path+"?word="+encodeURIComponent(prefix);
+            aj.generateRequest();
+          } else {
+            callback(null, []);
+          }
+        }
+      }
+      langTools.addCompleter(ghciCompleter);
+
+
       this.tooltip=null;
       ed.editor.commands.addCommand({
         name: "info",
@@ -227,9 +275,9 @@
       var editor=this.$.editor.editor;
       if (this.mime==='text/x-haskell'){
           editor.getSelection().selectWord();
-          var word=editor.getSession().getDocument().getTextRange(editor.getSelection().getRange());
+          var word=editor.getSession().getTextRange(editor.getSelection().getRange());
           //console.log(word);
-          aj.url="/info/"+this.path+"?word="+word;
+          aj.url="/info/"+this.path+"?word="+encodeURIComponent(word);
           aj.generateRequest();
           }
     },
