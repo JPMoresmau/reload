@@ -1,3 +1,4 @@
 - eval from interpreter
 - use intero for extra actions (need config option for repl invocation)
 - generate data-files for directory automatically (ex: web/build/bundled)
+- show column where cursor is

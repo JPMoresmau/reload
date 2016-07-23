@@ -1,7 +1,7 @@
 name:                reload
-version:             0.1.0.0
-synopsis:            Initial project template from stack
-description:         Please see README.md
+version:             0.0.0.1
+synopsis:            A web based Haskell IDE
+description:         Provides a web based Haskell IDE, on top of Ghcid
 homepage:            https://github.com/jpmoresmau/dbIDE/reload#readme
 license:             BSD3
 license-file:        LICENSE
@@ -45,12 +45,12 @@ library
                        Language.Haskell.Reload.Build
                        Language.Haskell.Reload.Project
                        Language.Haskell.Reload.Config
-  ghc-options:         -Wall -O2
+  ghc-options:         -Wall
 
 executable reload-exe
   hs-source-dirs:      app
   main-is:             Main.hs
-  ghc-options:         -threaded -O2 -rtsopts -with-rtsopts=-N
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , reload
   default-language:    Haskell2010
@@ -86,7 +86,7 @@ test-suite reload-test
                      , process
                      , async
                      , data-default
-  ghc-options:         -threaded -O2 -rtsopts -with-rtsopts=-N
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
   other-modules:       Language.Haskell.Reload.FileBrowserSpec
                        Language.Haskell.ReloadSpec

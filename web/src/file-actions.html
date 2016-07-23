@@ -48,8 +48,11 @@
          <paper-icon-button id="project" icon="build" alt="Project actions..." class="dropdown-trigger"></paper-icon-button>
          <paper-menu class="dropdown-content">
             <paper-icon-item on-tap="build"><iron-icon icon="build" alt="Build" item-icon></iron-icon>Build</paper-icon-item>
-            <paper-icon-item on-tap="test"><iron-icon icon="check" alt="Test" item-icon></iron-icon>Build and Test</paper-icon-item>
-            <paper-icon-item on-tap="bench"><iron-icon icon="editor:insert-chart" alt="Bench" item-icon></iron-icon>Build and Benchmark</paper-icon-item>
+            <paper-icon-item on-tap="test"><iron-icon icon="check" alt="Run Tests" item-icon></iron-icon>Build and Test</paper-icon-item>
+            <paper-icon-item on-tap="bench"><iron-icon icon="editor:insert-chart" alt="Run Benchmarks" item-icon></iron-icon>Build and Benchmark</paper-icon-item>
+            <paper-icon-item on-tap="haddock"><iron-icon icon="toc" alt="Generate Haddock" item-icon></iron-icon>Haddock</paper-icon-item>
+            <paper-icon-item on-tap="sdist"><iron-icon icon="cloud" alt="Generate source distribution" item-icon></iron-icon>Sdist</paper-icon-item>
+            <paper-icon-item on-tap="install"><iron-icon icon="system-update-alt" alt="Install" item-icon></iron-icon>Install</paper-icon-item>
             <paper-icon-item on-tap="runD"><iron-icon icon="maps:directions-run" alt="Run..." item-icon></iron-icon>Run...</paper-icon-item>
          </paper-menu>
       </paper-menu-button>
@@ -208,6 +211,18 @@
       bench:function(e){
         this.$.project_menu.close();
         this.fire("project-action",{"action":"bench"});
+      },
+      haddock:function(e){
+        this.$.project_menu.close();
+        this.fire("project-action",{"action":"haddock"});
+      },
+      sdist:function(e){
+        this.$.project_menu.close();
+        this.fire("project-action",{"action":"sdist"});
+      },
+      install:function(e){
+        this.$.project_menu.close();
+        this.fire("project-action",{"action":"install"});
       },
       runD: function(e){
         this.$.project_menu.close();
