@@ -25,4 +25,11 @@ spec :: Spec
 spec = with (app True)$ do
   describe "info" $ do
     it "get known info in module" $ do
-       get "/info/src/Language/Haskell/Reload/Build.hs?word=tryPutMVar" `shouldRespondWith` [json|["tryPutMVar :: MVar a -> a -> IO Bool \t-- Defined in ‘GHC.MVar’"]|] {matchStatus = 200}
+      get "/info/src/Language/Haskell/Reload/Build.hs?word=tryPutMVar" `shouldRespondWith` [json|["tryPutMVar :: MVar a -> a -> IO Bool \t-- Defined in ‘GHC.MVar’"]|] {matchStatus = 200}
+  describe "complete" $ do
+    it "provide import complete" $ do
+      get "/complete/src/Language/Haskell/Reload/Build.hs?word=import Data.May" `shouldRespondWith` [json|["Data.Maybe"]|] {matchStatus = 200}
+      get "/complete/src/Language/Haskell/Reload/Build.hs?word=import Data.Map" `shouldRespondWith` [json|["Data.Map","Data.Map.Lazy","Data.Map.Strict"]|] {matchStatus = 200}
+    it "provide code complete" $ do
+      get "/complete/src/Language/Haskell/Reload/Build.hs?word=inf" `shouldRespondWith` [json|["info"]|] {matchStatus = 200}
+      get "/complete/src/Language/Haskell/Reload/Build.hs?word=comp" `shouldRespondWith` [json|["compare","complete"]|] {matchStatus = 200}

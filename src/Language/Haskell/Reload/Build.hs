@@ -141,7 +141,7 @@ rebuild bs@(BuildState root buildResult mghci int _) path = void $ forkIO $ do
 restartBuild :: BuildState -> IO ()
 restartBuild (BuildState root buildResult mghci _ _) = do
   ghci <- readIORef mghci
-  putStrLn $ "Rebuilding:"++(show $ length ghci)
+  -- putStrLn $ "Rebuilding:"++(show $ length ghci)
   _ <- mapM (quit . rtGhci) ghci
   tgts <- startSessions root buildResult
   writeIORef mghci tgts

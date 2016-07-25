@@ -8,6 +8,7 @@ import           Network.Wai.Test
 import           Data.Aeson hiding (json)
 
 import           Language.Haskell.Reload (app)
+import           Language.Haskell.Reload.Config
 import           System.Directory
 import           System.FilePath
 import           Data.List (sortBy, isPrefixOf)
@@ -27,7 +28,12 @@ spec = after cleanUp $ with (app False)$ do
       js <- liftIO $ do
           root <- getCurrentDirectory
           fs <- getDirectoryContents root
-          let visible = filter (not . ("." `isPrefixOf`) . takeFileName) fs
+          mv <- config root
+          let showHidden = showHiddenFiles mv
+          let filt = if showHidden
+                        then (\x->x/="." && x/="..")
+                        else (not . ("." `isPrefixOf`))
+          let visible = filter (filt . takeFileName) fs
           sortBy sortFs <$> mapM (fileToJson root) visible
       get "/files" `shouldRespondWith` (fromValue $ toJSON js)
       get "/files/" `shouldRespondWith` (fromValue $ toJSON js)
