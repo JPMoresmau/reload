@@ -32,7 +32,7 @@
     top: 4px;
     right: 0px;
     left: 0px;
-    display: none;
+    visibility: hidden;
   }
   </style>
 
@@ -77,9 +77,9 @@
         } else {
           this.editing=true;
         }
-        this.$.editor.style.display='block';
+        this.$.editor.style.visibility='visible';
       } else {
-        this.$.editor.style.display='none';
+        this.$.editor.style.visibility='hidden';
       }
 
     },
@@ -239,7 +239,7 @@
           me.info();
         }
       });
-      ed.editor.resize();
+      //ed.editor.resize();
 
       var s=ed.editor.getSession();
       s.on('changeScrollTop',this.captureScrollTop.bind(this));
