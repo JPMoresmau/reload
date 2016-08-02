@@ -10,6 +10,8 @@ import Language.Haskell.Reload.Config
 import Language.Haskell.Reload.FileBrowser
 import Language.Haskell.Reload.Project
 
+import Paths_reload
+
 import           Data.Aeson (Value(..),encode,object,(.=))
 import           Network.Wai
 import           Network.Wai.Handler.Warp
@@ -40,11 +42,12 @@ import System.Process (rawSystem)
 
 -- | The scotty application
 scottyDef 
-  :: IORef Bool -- ^ the active beacon, each ping request sets it to true
+  :: FilePath   -- ^ the static directory
+  -> IORef Bool -- ^ the active beacon, each ping request sets it to true
   -> BuildState -- ^ the state we keep over the lifetime of the app
   -> ScottyM ()
-scottyDef active buildState = do
-  middleware $ staticPolicy (addBase "web")
+scottyDef dataDir active buildState = do
+  middleware $ staticPolicy (addBase dataDir)
   -- middleware $ logStdout
   get "/" $ file "web/index.html"
   get (regex "^/ping$") $ do
@@ -199,11 +202,12 @@ fullApp
   -> Bool -- ^ Shall we start the REPL (disabled for some tests for performance)
   -> IO Application
 fullApp active withRepl = do
+  staticDir <- getDataDir
   root <- getCurrentDirectory
   buildResult <- newEmptyMVar
   buildState <- startBuild root buildResult withRepl
   when withRepl $ putStrLn $ "Ready!"
-  sco <- scottyApp $ scottyDef active buildState
+  sco <- scottyApp $ scottyDef (staticDir </> "web") active buildState
   return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
 
 -- | Simple application builder
