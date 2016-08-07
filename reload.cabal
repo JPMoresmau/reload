@@ -28,13 +28,6 @@ data-files:
     web/bower_components/ace-builds/LICENSE
     web/bower_components/ace-builds/src-min-noconflict/*.js
     web/bower_components/ace-builds/src-min-noconflict/snippets/*.js
-    web/bower_components/ace-builds/src-min/*.js
-    web/bower_components/ace-builds/src-min/snippets/*.js
-    web/bower_components/ace-builds/src-noconflict/*.js
-    web/bower_components/ace-builds/src-noconflict/snippets/*.js
-    web/bower_components/ace-builds/src/*.js
-    web/bower_components/ace-builds/src/snippets/*.js
-    web/bower_components/ace-builds/textarea/src/*.js
     web/bower_components/app-layout/*.html
     web/bower_components/app-layout/*.json
     web/bower_components/app-layout/*.md

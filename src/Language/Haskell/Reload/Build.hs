@@ -99,7 +99,7 @@ startSessions root buildResult = do
               Just cf -> do
                 grps <- readTargetGroups cf
                 unzip <$> mapM (replTarget root) grps
-    _ <- tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
+    tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
     return tgts
     )
     (\(e::GhciError) -> do
@@ -260,3 +260,4 @@ complete bs fp s = do
   return $ maybe [] (map unquote . filter (not . null) . drop 1) ms
   where
     unquote = tail . init -- garanteed not empty
+
