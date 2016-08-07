@@ -1,5 +1,5 @@
 name:                reload
-version:             0.0.0.1
+version:             0.0.0.2
 synopsis:            A web based Haskell IDE
 description:         Provides a web based Haskell IDE, on top of Ghcid
 homepage:            https://github.com/jpmoresmau/reload#readme
