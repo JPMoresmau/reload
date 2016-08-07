@@ -99,7 +99,7 @@ startSessions root buildResult = do
               Just cf -> do
                 grps <- readTargetGroups cf
                 unzip <$> mapM (replTarget root) grps
-    tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
+    _ <- tryPutMVar buildResult $ loadsToValue root (ordNub $ concat loads)
     return tgts
     )
     (\(e::GhciError) -> do
