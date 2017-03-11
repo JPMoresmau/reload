@@ -100,12 +100,12 @@ data-files:
     web/bower_components/chai/*.json
     web/bower_components/chai/*.md
     web/bower_components/chai/*.sauce.js
-    web/bower_components/core-action-icons/*.md
-    web/bower_components/core-action-icons/*.png
-    web/bower_components/core-component-page/*.html
-    web/bower_components/core-component-page/*.json
-    web/bower_components/core-component-page/*.md
-    web/bower_components/core-component-page/*.png
+    --web/bower_components/core-action-icons/*.md
+    --web/bower_components/core-action-icons/*.png
+    --web/bower_components/core-component-page/*.html
+    --web/bower_components/core-component-page/*.json
+    --web/bower_components/core-component-page/*.md
+    --web/bower_components/core-component-page/*.png
     web/bower_components/font-roboto/*.html
     web/bower_components/font-roboto/*.json
     web/bower_components/font-roboto/*.md
@@ -294,14 +294,14 @@ data-files:
     web/bower_components/paper-tooltip/*.html
     web/bower_components/paper-tooltip/*.json
     web/bower_components/paper-tooltip/*.md
-    web/bower_components/platform/*.js
-    web/bower_components/platform/*.js.map
-    web/bower_components/platform/*.json
-    web/bower_components/platform/*.log
-    web/bower_components/platform/*.md
-    web/bower_components/platform/AUTHORS
-    web/bower_components/platform/LICENSE
-    web/bower_components/platform/PATENTS
+    --web/bower_components/platform/*.js
+    --web/bower_components/platform/*.js.map
+    --web/bower_components/platform/*.json
+    --web/bower_components/platform/*.log
+    --web/bower_components/platform/*.md
+    --web/bower_components/platform/AUTHORS
+    --web/bower_components/platform/LICENSE
+    --web/bower_components/platform/PATENTS
     web/bower_components/polymer/*.html
     web/bower_components/polymer/*.json
     web/bower_components/polymer/*.log

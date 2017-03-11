@@ -5,8 +5,8 @@
   ],
   "private": true,
   "dependencies": {
-    "app-layout": "polymerelements/app-layout#^0.9.0",
-    "app-route": "polymerelements/app-route#^0.9.1",
+    "app-layout": "polymerelements/app-layout#^0.10.7",
+    "app-route": "polymerelements/app-route#^0.9.3",
     "iron-flex-layout": "polymerelements/iron-flex-layout#^1.0.0",
     "iron-icon": "polymerelements/iron-icon#^1.0.0",
     "iron-iconset-svg": "polymerelements/iron-iconset-svg#^1.0.0",
@@ -32,9 +32,12 @@
     "paper-badge": "PolymerElements/paper-badge#^1.1.2",
     "paper-radio-group": "PolymerElements/paper-radio-group#^1.2.0",
     "paper-radio-button": "PolymerElements/paper-radio-button#^1.2.1",
-    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^1.1.5"
+    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^1.1.5",
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"
+  },
+  "resolutions": {
+    "polymer": "^1.5.0"
   }
 }
